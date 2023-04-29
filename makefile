@@ -11,3 +11,5 @@ clean:
 	umount /dev/loop0p1
 	rm master -rf
 	rm master.img -f
+run:
+	bochs -q
