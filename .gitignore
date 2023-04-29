@@ -1,2 +1,6 @@
 master.img
+master.img.lock
 /master/
+
+*.bin
+*.obj
