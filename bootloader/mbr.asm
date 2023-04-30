@@ -8,7 +8,7 @@ org 0x7c00
 fat32SIG equ 0x0c
 partTable equ 0x7dbe
 fat32Buf equ 0x7e00
-buf equ 0x8000
+rootBuf equ 0x8000
 bootaddr equ 0x8200
 
 jmp start
@@ -72,12 +72,12 @@ getRootDir:
     push ecx
 
     mov word [sectorCnt],0x01
-    mov dword [bufaddr],buf
+    mov dword [bufaddr],rootBuf
     mov dword [startSector],ecx
     call read
 
     mov cx,512/32
-    mov si,buf
+    mov si,rootBuf
 lookupBoot:
     cmp dword [si],"BOOT"
     jne next
@@ -86,10 +86,9 @@ lookupBoot:
     cmp dword [si+7]," BIN"
     jne next
 
-    mov bx,[si+DIR_FstClusLO]
     mov ax,[si+DIR_FstClusHI]
-    shl ax,16
-    or eax,ebx
+    shl eax,16
+    mov ax,[si+DIR_FstClusLO]
     sub eax,2
 
     xor ebx,ebx
