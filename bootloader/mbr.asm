@@ -1,34 +1,47 @@
 ;======================================
-;mbr 扇区的加载bootloader.bin 的程序
+;mbr 扇区的加载boot.bin 的程序
 ;适用文件系统FAT32
 ;======================================
+org 0x7c00
 %include "fat32.asm"
 
-org 0x7c00
+fat32SIG equ 0x0c
 partTable equ 0x7dbe
 fat32Buf equ 0x7e00
+buf equ 0x8000
+bootaddr equ 0x8200
+
+jmp start
+%include "util.asm"
+
+start:
+
+; clear the screen
+mov ah,0x00
+mov al,0x03
+int 0x10
 
 mov si,partTable
 mov cx,4
-find:
+findActPart:
     cmp byte [si],0x80
-    je found
+    je checkFs
     add si,0x10
-    loop find
+    loop findActPart
     mov cx,NoActive_len
     mov bp,NoActive
     call error
     jmp $
-found:
-    cmp byte [si+0x04],0x0c
-    je fat32
+checkFs:
+    cmp byte [si+0x04],fat32SIG
+    je getRootDir
     mov cx,NoFat32_len
     mov bp,NoFat32
     call error
     jmp $
-fat32:
-    mov cx,Success_len
-    mov bp,Success
+getRootDir:
+    mov cx,YesFat32_len
+    mov bp,YesFat32
     call info
 
     mov eax,[si+0x08]
@@ -37,73 +50,90 @@ fat32:
     mov dword [startSector],eax
     call read
 
-    mov ax,[fat32Buf+BPB_ResvdSecCnt]
-    mov cl,[fat32Buf+BPB_NumFATs]
+    xor eax,eax
+    xor ebx,ebx
+    xor ecx,ecx
+    mov cx,[fat32Buf+BPB_ResvdSecCnt]
+    mov al,[fat32Buf+BPB_NumFATs]
     mov bx,[fat32Buf+BPB_FATSz16]
+
     cmp bx,0x00
     jne FATSz16
     mov ebx,[fat32Buf+BPB_FATSz32]
+    mul ebx
+    jmp getDataSec
     FATSz16:
+    mul bx
 
+    getDataSec:
+    add ecx,eax
+    mov ebx,[fat32Buf+PBP_HiddSec]
+    add ecx,ebx
+    push ecx
 
+    mov word [sectorCnt],0x01
+    mov dword [bufaddr],buf
+    mov dword [startSector],ecx
+    call read
+
+    mov cx,512/32
+    mov si,buf
+lookupBoot:
+    cmp dword [si],"BOOT"
+    jne next
+    cmp dword [si+4],"    "
+    jne next
+    cmp dword [si+7]," BIN"
+    jne next
+
+    mov bx,[si+DIR_FstClusLO]
+    mov ax,[si+DIR_FstClusHI]
+    shl ax,16
+    or eax,ebx
+    sub eax,2
+
+    xor ebx,ebx
+    mov bl,[fat32Buf+BPB_SecPerClus]
+    mul ebx
+    pop ecx
+    add eax,ecx
+    mov dword [startSector],eax
+
+    mov eax,[si+DIR_FileSize]
+    mov ebx,512
+    div ebx
+    cmp edx,0
+    je NoRemainder
+    inc eax
+    NoRemainder:
+    mov word [sectorCnt],ax
+    mov dword [bufaddr],bootaddr
+    jmp load
+
+    next:
+    add si,32
+    loop lookupBoot
+    mov cx,NotFoundBoot_len
+    mov bp,NotFoundBoot
+    call error
     jmp $
-read:
-    push ax
-    push dx
-    push ds
-    push si
-    mov ax,0x00
-    mov ds,ax
-    mov si,diskaddrpack
-    mov ah,0x42
-    mov dl,0x80
-    int 0x13
-    pop si
-    pop ds
-    pop dx
-    pop ax
-    ret
-error:
-    push bx
-    mov bl,0b00000010
-    jmp print
-info:
-    push bx
-    mov bl,0b00000010
-    jmp print
-print:
-    push ax
-    push dx
-    mov ax,0x00
-    mov es,ax
-    mov ah,0x13
-    mov al,0x01
-    mov dh,[y]
-    mov dl,[x]
-    mov bh,0x0
-    int 0x10
-    add byte [y],0x01
-    pop dx
-    pop ax
-    pop bx
-    ret
+
+    load:
+    call read
+
+    mov cx,Success_len
+    mov bp,Success
+    call info
+    jmp bootaddr
 
 message:
-    NoActive db 'err0x00'
+    NoActive db 'err0'
     NoActive_len equ $-NoActive
-    NoFat32 db 'err0x01'
+    NoFat32 db 'err1'
     NoFat32_len equ $-NoFat32
+    NotFoundBoot db 'err2'
+    NotFoundBoot_len equ $-NotFoundBoot
+    YesFat32 db 'it is fat32'
+    YesFat32_len equ $-YesFat32
     Success db 'success'
     Success_len equ $-Success
-
-printposition:
-    x db 0x00
-    y db 0x00
-
-diskaddrpack:
-    size             db 0x18
-    reserve          db 0x00
-    sectorCnt        dw 0x00
-    bufaddr          dd 0x00
-    startSector      dq 0x00
-    ; bufaddrExtension dq 0x00
