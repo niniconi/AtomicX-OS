@@ -15,6 +15,10 @@ kernel equ 0x100000
 kernelBuf equ 0x7e00
 kernelBufLen equ 2
 
+e820MemoryStruct equ 0x7e00
+
+[BITS 16]
+
 start:
     ;clear the screen
     mov ah,0x00
@@ -146,10 +150,104 @@ load:
     mov bp,HasLoadedKernel
     call info
 
+getMemoryStruct:
+    mov ax,0x00
+    mov es,ax
+    mov di,e820MemoryStruct
+    mov eax,0x0000e820
+    mov edx,0x534d4150
+    mov ebx,0x00000000
+    mov ecx,20
+    int 0x15
+    jc failed
+    jmp success
+    failed:
+        cmp ah,0x80
+        jmp E820NotSupport
+        cmp ah,0x86
+        jmp E820InvalidCmd
+        E820InvalidCmd:
+        mov cx,E820FailedInvalid_len
+        mov bp,E820FailedInvalid
+        jmp callErrorE820
+        E820NotSupport:
+        mov cx,E820FailedNotSupport_len
+        mov bp,E820FailedNotSupport
+        callErrorE820:
+        call error
+        jmp $
+    success:
+        mov cx,E820Success_len
+        mov bp,E820Success
+        call info
+
+setVESA:
+    mov ax,0x4f02
+    mov bx,0x4180
+    int 0x10
+
+    cmp ax,0x004f
+    jz intoProtectMode
+    mov cx,SetVESAModeFailed_len
+    mov bp,SetVESAModeFailed
+    call error
+    jmp $
+
+intoProtectMode:
+    cli
+    db 0x66
+    lgdt [GDTPtr]
+
+    mov eax,cr0
+    or eax,1
+    mov cr0,eax
+
+    mov ax,0x10
+    mov ds,ax
+    mov es,ax
+    mov ss,ax
+    mov fs,ax
+    mov gs,ax
+    mov esp,0x7c00
+
+    jmp DWORD 0x08:intoLongMode
+[BITS 32]
+intoLongMode:
+    checkSupportLongMode:
+        mov eax,0x80000000
+        cpuid
+        cmp eax,0x80000001
+        jb NotSupportLongModeInfo
+        mov eax,0x80000001
+        cpuid
+        and eax,0x01 << 29
+        cmp eax,0x01 << 29
+        je SupportLongModeInfo
+        NotSupportLongModeInfo:
+            ; mov cx,NotSupportLongMode_len
+            ; mov bp,NotSupportLongMode
+            ; call error
+            jmp $
+        SupportLongModeInfo:
+            ; mov cx,SupportLongMode_len
+            ; mov bp,SupportLongMode
+            ; call info
     jmp $
 message:
     NoKernel db "[error]:not found kernel.bin"
     NoKernel_len equ $-NoKernel
+    SetVESAModeFailed db "[error]:set SVGA mode(VESA VBE) failed"
+    SetVESAModeFailed_len equ $-SetVESAModeFailed
+    E820FailedInvalid db "[error]:get E820 struct failed(invalid command)"
+    E820FailedInvalid_len equ $-E820FailedInvalid
+    E820FailedNotSupport db "[error]:get E820 struct failed(not support)"
+    E820FailedNotSupport_len equ $-E820FailedNotSupport
+    E820Success db "[info ]:get E820 struct success"
+    E820Success_len equ $-E820Success
+    ; SupportLongMode db "[info ]:support long mode"
+    ; SupportLongMode_len equ $-SupportLongMode
+    ; NotSupportLongMode db "[error]:not support long mode"
+    ; NotSupportLongMode_len equ $-NotSupportLongMode
     GetKernel db "[info ]:kernel.bin is exist and get kernel.bin info"
     GetKernel_len equ $-GetKernel
     HasLoadedKernel db "[info ]:has loaded kernel.bin"
@@ -157,7 +255,6 @@ message:
     OpenedA20 db "[info ]:opened A20"
     OpenedA20_len equ $-OpenedA20
 
-[BITS 32]
 GDT:
     dq 0x0000000000000000;null segment
     dq 0x00cf9e000000ffff;code 32 bits segment
@@ -166,3 +263,6 @@ GDT:
 GDTPtr:
     dw $-GDT
     dd GDT
+GDT64:
+    dq 0x0000000000000000
+GDT64Ptr:
