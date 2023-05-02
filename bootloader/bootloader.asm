@@ -220,19 +220,61 @@ intoLongMode:
         jb NotSupportLongModeInfo
         mov eax,0x80000001
         cpuid
-        and eax,0x01 << 29
-        cmp eax,0x01 << 29
+        and edx,0x01 << 29
+        cmp edx,0x01 << 29
         je SupportLongModeInfo
         NotSupportLongModeInfo:
-            ; mov cx,NotSupportLongMode_len
-            ; mov bp,NotSupportLongMode
-            ; call error
             jmp $
-        SupportLongModeInfo:
-            ; mov cx,SupportLongMode_len
-            ; mov bp,SupportLongMode
-            ; call info
-    jmp $
+    SupportLongModeInfo:
+    chekcSupportPAE:
+        mov eax,0x01
+        cpuid
+        and edx,0x01 << 6
+        cmp edx,0x01 << 6
+        je supportPAE
+        jmp $
+    supportPAE:
+
+    mov dword [0x90000],0x91007
+    mov dword [0x90800],0x91007
+
+    mov dword [0x91000],0x92007
+
+    mov dword [0x92000],0x000083
+    mov dword [0x92008],0x200083
+    mov dword [0x92010],0x400083
+    mov dword [0x92018],0x600083
+    mov dword [0x92020],0x800083
+    mov dword [0x92020],0xa00083
+
+    db 0x66
+    lgdt [GDT64Ptr]
+    mov ax,0x10
+    mov ds,ax
+    mov es,ax
+    mov fs,ax
+    mov gs,ax
+    mov ss,ax
+
+    mov esp,0x7c00
+
+    mov eax,cr4
+    or eax,0x01 << 5
+    mov cr4,eax
+
+    mov eax,0x90000
+    mov cr3,eax
+
+    mov ecx,0xc0000080
+    rdmsr
+    bts eax,8
+    wrmsr
+
+    mov eax,cr0
+    or eax,0x01 << 31
+    mov cr0,eax
+
+    jmp kernel
 message:
     NoKernel db "[error]:not found kernel.bin"
     NoKernel_len equ $-NoKernel
@@ -244,10 +286,6 @@ message:
     E820FailedNotSupport_len equ $-E820FailedNotSupport
     E820Success db "[info ]:get E820 struct success"
     E820Success_len equ $-E820Success
-    ; SupportLongMode db "[info ]:support long mode"
-    ; SupportLongMode_len equ $-SupportLongMode
-    ; NotSupportLongMode db "[error]:not support long mode"
-    ; NotSupportLongMode_len equ $-NotSupportLongMode
     GetKernel db "[info ]:kernel.bin is exist and get kernel.bin info"
     GetKernel_len equ $-GetKernel
     HasLoadedKernel db "[info ]:has loaded kernel.bin"
@@ -264,5 +302,9 @@ GDTPtr:
     dw $-GDT
     dd GDT
 GDT64:
-    dq 0x0000000000000000
+    dq 0x0000000000000000;null segment
+    dq 0x00609e0000000000;code 64 bits segment
+    dq 0x0000920000000000;data 64 bits segment
 GDT64Ptr:
+    dw $-GDT64
+    dd GDT64
