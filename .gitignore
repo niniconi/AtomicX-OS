@@ -1,6 +1,9 @@
 master.img
 master.img.lock
+kernel/_head.S
 /master/
 
 *.bin
 *.obj
+*.o
+*.elf
