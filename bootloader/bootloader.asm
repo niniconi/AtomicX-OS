@@ -274,7 +274,7 @@ intoLongMode:
     or eax,0x01 << 31
     mov cr0,eax
 
-    jmp kernel
+    jmp 0x08:kernel
 message:
     NoKernel db "[error]:not found kernel.bin"
     NoKernel_len equ $-NoKernel
@@ -303,7 +303,7 @@ GDTPtr:
     dd GDT
 GDT64:
     dq 0x0000000000000000;null segment
-    dq 0x00609e0000000000;code 64 bits segment
+    dq 0x00209e0000000000;code 64 bits segment
     dq 0x0000920000000000;data 64 bits segment
 GDT64Ptr:
     dw $-GDT64

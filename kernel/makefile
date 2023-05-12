@@ -6,7 +6,7 @@ head.o:head.S
 	gcc -E head.S > _head.S
 	as --64 -o head.o _head.S
 kernel.o:kernel.c
-	gcc -mcmodel=large -fno-builtin -m64 -c kernel.c
+	gcc -mcmodel=large -fno-builtin -m64 -c kernel.c -o kernel.o
 kernel.elf:kernel.o head.o
 	ld -b elf64-x86-64 -o kernel.elf head.o kernel.o -T Kernel.lds
 kernel.bin:kernel.elf

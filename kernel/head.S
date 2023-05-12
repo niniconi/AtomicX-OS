@@ -1,7 +1,13 @@
 #include "link.h"
+
+.section .text
+
 ENTRY(_start)
+    lgdt GDTPtr(%rip)
+    lidt IDTPtr(%rip)
     jmp kernel
 
+.section .data
 
 ENTRY(PML4)
     .org 0x1000
@@ -9,17 +15,30 @@ ENTRY(PML4)
         .quad 0x102003
     .org 0x2000
     __PDPT:
-        .quad 0x103083
+        .quad 0x00103003
+        .quad 0x00000083//1GB PAGE
+        .quad 0x40000083//1GB PAGE
     .org 0x3000
     __PDT:
+        // the default page size
+        .quad 0x0000083//1MB PAGE
+        .quad 0x0200083//1MB PAGE
+        .quad 0x0400083//1MB PAGE
+        .quad 0x0600083//1MB PAGE
+        .quad 0x0800083//1MB PAGE
+        .quad 0x0a00083//1MB PAGE
+        .quad 0x0c00083//1MB PAGE
+        .quad 0x0e00083//1MB PAGE
+        .quad 0x1000083//1MB PAGE
+        .quad 0x0104003
     .org 0x4000
     __PT:
 
 ENTRY(GDT)
     .quad 0x0000000000000000//null descriptor
-    .quad 0x00609e0000000000//kernel code 64 bit segment descriptor
+    .quad 0x00209e0000000000//kernel code 64 bit segment descriptor
     .quad 0x0000920000000000//kernel data 64 bit segment descriptor
-    .quad 0x0060fe0000000000//user code 64 bit segment descriptor
+    .quad 0x0020fe0000000000//user code 64 bit segment descriptor
     .quad 0x0000f20000000000//user data 64 bit segment descriptor
     .quad 0x00cf9e000000ffff//kernel code 32 bit segment descriptor
     .quad 0x00cf92000000ffff//kernel data 32 bit segment descriptor
