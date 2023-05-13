@@ -1,6 +1,8 @@
 master.img
 master.img.lock
 kernel/_head.S
+kernel/font/mkfont
+kernel/font/font.h
 /master/
 
 *.bin
