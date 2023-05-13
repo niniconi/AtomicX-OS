@@ -138,8 +138,8 @@ load:
         mov ecx,kernelBufLen*512
         mov esi,kernelBuf
         movKernel:
-            mov al,[gs:esi]
-            mov [gs:edi],al
+            mov dl,[gs:esi]
+            mov [gs:edi],dl
             inc edi
             inc esi
             loop movKernel

@@ -6,4 +6,7 @@
 #define ENTRY(name) \
     .global NAME(name); \
     NAME_LABEL(name)
+#define GLOBAL(name) \
+    .global NAME(name); \
+    NAME_LABEL(name)
 #endif
