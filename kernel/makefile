@@ -1,4 +1,4 @@
-OBJ=kernel.o head.o print.o
+OBJ=head.o kernel.o print.o
 BIN=kernel.bin
 DIR=../master
 

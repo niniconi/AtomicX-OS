@@ -12,7 +12,7 @@ void printchar(int x,int y,char c,int bkcolor,int bgcolor){
     for (i=0;i<16;i++) {
         tmp = *(font+i);
         for (j=0;j<8;j++) {
-            if (tmp & 0x01<<j) *(vstart+j) =bkcolor;
+            if (tmp & 0x80>>j) *(vstart+j) =bkcolor;
             else *(vstart+j) = bgcolor;
         }
         vstart += pos.width;
