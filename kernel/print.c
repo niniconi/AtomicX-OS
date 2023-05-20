@@ -1,42 +1,57 @@
 #include "font.h"
 #include "print.h"
+#include "lib.h"
 #include <stdarg.h>
 
 struct position pos;
 
 char buf[4096];
 
-extern int inline isdigital(const char *s){
+extern int inline todigital(const char *s){
     int ret = 0;
     while(*s >='0' && *s <= '9')ret=ret*10+*(s++) - '0';
     return ret;
 }
-int number(char * buf,unsigned long number,unsigned long flags,unsigned int R){
-    int i,length;
+int number(char * buf,unsigned long number,unsigned long flags,unsigned int R,unsigned int bit_length){
+    int i,length=bit_length,num_length;
     unsigned long tmp;
     char *num_sys = "0123456789abcdefghijklmnopqrstuvwxyz";
 
     if(flags & NUM_CAPITAL)
         for(i=10;i<36;i++)*(num_sys+i) -= 32;
-    if(flags & NUM_XSIGN){
-        *buf++ = '0';
-        *buf++ = 'x';
-    }
     if(R<2 || R > 36)return 0;
 
-    for(length=0,tmp=number;tmp!=0;length++)
+    for(num_length=0,tmp=number;tmp!=0;num_length++)
         tmp /= R;
+    if (length == 0) length = num_length;
 
-    for(int i=length-1;i>=0;i--,number/=R)
+    if(flags & NUM_XSIGN && flags & NUM_LEFT){
+        *buf++='0';
+        *buf++='x';
+    }
+
+    for(i=0;i<length-num_length;i++){
+        if(flags & NUM_SPACE)*buf++=' ';
+        else if (flags & NUM_ZERO)*buf++='0';
+    }
+
+    if(flags & NUM_XSIGN && flags & NUM_RIGHT){
+        *buf++='0';
+        *buf++='x';
+    }
+
+    for(i=num_length - 1;i>=0;i--,number/=R)
         *(buf+i)=num_sys[number % R];
 
+    if(flags & NUM_XSIGN)length+=2;
     return length;
 }
 
 int vsprintf(char *buf,const char * format,va_list ap){
-    unsigned long flags = 0;
-    int R = 16;
+    unsigned long flags;
+    int bit_length = 0;
     while(*format != '\0'){
+        flags = 0;
         if(*format == '%'){
             format++;
             switch (*format) {
@@ -45,36 +60,37 @@ int vsprintf(char *buf,const char * format,va_list ap){
                 case ' ':
                 case '#':
                     flags |= NUM_XSIGN;
-                    int num;
                     if(*(++format) == '0'){
-                        num = isdigital(++format);
-                        for (num++;num>=0;num--)
-                            *(buf+num)='0';
+                        bit_length = todigital(++format);
+                        flags |= NUM_ZERO | NUM_LEFT;
                     }else{
-                        num = isdigital(format);
-                        for (num++;num>=0;num--)
-                            *(buf+num)=' ';
+                        bit_length = todigital(format);
+                        flags |= NUM_SPACE | NUM_RIGHT;
                     }
                     format++;
                     break;
                 case '0':
                     break;
             }
-            long num = va_arg(ap,long);
             switch(*format){
                 case 'd':
-                    buf += number(buf, num, 0, 10);
-                    format++;
+                    buf += number(buf, va_arg(ap,int), 0, 10,bit_length);
                     break;
                 case 'x':
-                    buf += number(buf, num, 0, 16);
-                    format++;
+                    buf += number(buf, va_arg(ap, long), flags, 16,bit_length);
                     break;
                 case 'X':
-                    buf += number(buf, num, NUM_CAPITAL, 16);
-                    format++;
+                    buf += number(buf, va_arg(ap, long), flags | NUM_CAPITAL, 16,bit_length);
+                    break;
+                case 'c':
+                    *buf++=va_arg(ap, long);
+                    break;
+                case 's':
+                    for (char *str = va_arg(ap,char *); *str != '\0'; str++)
+                        *buf++=*str;
                     break;
             }
+            format++;
         }
         *(buf++) = *format;
         format++;
@@ -83,29 +99,56 @@ int vsprintf(char *buf,const char * format,va_list ap){
     return 0;
 }
 
+void roll(unsigned long flags,unsigned int lines){
+    void *source,*destination;
+    unsigned int size = 0;
+    if(flags & ROLL_DOWN){
+        destination = pos.vromaddr;
+        source = pos.vromaddr + lines*pos.charys*pos.width;
+        size = (pos.height/pos.charys - lines)*pos.charys*pos.width*sizeof(int);
+    }
+    memcpy(source, destination, size);
+}
+
 void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,...){
     va_list ap;
     char *buf = (char *)buf;
+    int i;
+
     va_start(ap, format);
     vsprintf(buf,format,ap);
     va_end(ap);
 
     buf = (char *)buf;
     for(;*buf != '\0';buf++){
-        if(*buf=='\n'){
-            pos.y++;
-            pos.x=0;
-            continue;
-        }else if (*buf=='\b') {
-            pos.x--;
-            if(pos.x < 0)pos.x=0;
-            printchar(pos.x, pos.y, ' ', bkcolor, bgcolor);
-            continue;
+        switch (*buf) {
+            case '\n':
+                pos.y++;
+                if(pos.y >= pos.height/pos.charys)roll(ROLL_DOWN, 1);
+                pos.x=0;
+                continue;
+            case '\b':
+                pos.x--;
+                if(pos.x < 0)pos.x=0;
+                printchar(pos.x, pos.y, ' ', bkcolor, bgcolor);
+                continue;
+            case '\t':
+                for (i=0; i<8; i++){
+                    printchar(pos.x++, pos.y, ' ', bkcolor, bgcolor);
+                    if(pos.x >= pos.width/pos.charxs){
+                        pos.y++;
+                        if(pos.y >= pos.height/pos.charys)roll(ROLL_DOWN, 1);
+                        pos.x=0;
+                        break;
+                    }
+                }
+                continue;
         }
         printchar(pos.x, pos.y, *buf, bkcolor, bgcolor);
         pos.x++;
         if(pos.x >= pos.width/pos.charxs){
             pos.y++;
+            if(pos.y >= pos.height/pos.charys)roll(ROLL_DOWN, 1);
             pos.x=0;
         }
     }

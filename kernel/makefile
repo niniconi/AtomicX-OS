@@ -11,7 +11,7 @@ print.o:print.c
 	gcc -mcmodel=large -fno-builtin -m64 -c print.c -o print.o -fno-stack-protector
 
 kernel.elf:$(OBJ)
-	ld -b elf64-x86-64 -o kernel.elf $(OBJ) -T Kernel.lds
+	ld -b elf64-x86-64 -z muldefs -o kernel.elf $(OBJ) -T Kernel.lds
 kernel.bin:kernel.elf
 	objcopy -I elf64-x86-64 -S -R ".eh_frame" -R ".comment" -O binary kernel.elf kernel.bin
 install:kernel.bin

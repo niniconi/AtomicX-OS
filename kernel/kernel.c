@@ -1,24 +1,7 @@
 #include "print.h"
+#include "lib.h"
 
 void kernel(){
-    int * vrom = (int *)0xffff800002200000;
-    int i,j;
-    for (i=0,j=0;i<1440;i++,j=0){
-        while(j++<16)
-            *(vrom + j*1440 + i)=0x000000ff;
-    }
-    for (i=0,j=16;i<1440;i++,j=16){
-        while(j++<32)
-            *(vrom + j*1440 + i)=0x0000ff00;
-    }
-    for (i=0,j=32;i<1440;i++,j=32){
-        while(j++<48)
-            *(vrom + j*1440 + i)=0x00ff0000;
-    }
-    for (i=0,j=48;i<1440;i++,j=48){
-        while(j++<64)
-            *(vrom + j*1440 + i)=0x00ffffff;
-    }
     pos.x=0;
     pos.y=0;
     pos.width=1440;
@@ -27,8 +10,30 @@ void kernel(){
     pos.charys=16;
     pos.vromaddr=(int *)0xffff800002200000;
 
-    INFO("hello word!\n");
-    ERROR("hello word!\n");
-    WARRING("hello word!\n");
+    char cpuid_buf[16] = {0};
+    unsigned int *a,*b,*c,*d;
+    a=(unsigned int *)&cpuid_buf[12];
+    b=(unsigned int *)&cpuid_buf[8];
+    c=(unsigned int *)&cpuid_buf[4];
+    d=(unsigned int *)&cpuid_buf[0];
+
+    cpuid(0x00, 0x00, a, b, c, d);
+    info("CPUID max base function id %#08x\n", *a);
+    info("CPU label %s\n", cpuid_buf);
+    cpuid(0x01, 0x00, a, b, c, d);
+    info("CPU version infomation %#08x\n", *a);
+    cpuid(0x80000000, 0x00, a, b, c, d);
+    info("CPUID max ex function id %#08x\n", *a);
+
+    info("");
+    cpuid(0x80000002, 0x00, a, b, c, d);
+    color_print(COL_BLACK, COL_BLACK, "%s", cpuid_buf);
+    cpuid(0x80000003, 0x00, a, b, c, d);
+    color_print(COL_BLACK, COL_BLACK, "%s", cpuid_buf);
+    cpuid(0x80000004, 0x00, a, b, c, d);
+    color_print(COL_BLACK, COL_BLACK, "%s", cpuid_buf);
+    cpuid(0x80000008, 0x00, a, b, c, d);
+    color_print(COL_BLACK, COL_BLACK, "%s\n", cpuid_buf);
+
     while(1);
 }
