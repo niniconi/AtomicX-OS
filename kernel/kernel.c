@@ -26,16 +26,9 @@ void kernel(){
     pos.charxs=8;
     pos.charys=16;
     pos.vromaddr=(int *)0xffff800002200000;
-    printchar(0, 0, 'H', COL_BLUE, COL_BLACK);
-    printchar(1, 0, 'e', COL_GREEN, COL_BLACK);
-    printchar(2, 0, 'l', COL_RED, COL_BLACK);
-    printchar(3, 0, 'l', COL_GREEN, COL_BLACK);
-    printchar(4, 0, 'o', COL_GREEN, COL_BLACK);
-    printchar(5, 0, ',', COL_GREEN, COL_BLACK);
-    printchar(6, 0, 'w', COL_GREEN, COL_BLACK);
-    printchar(7, 0, 'o', COL_GREEN, COL_BLACK);
-    printchar(8, 0, 'r', COL_GREEN, COL_BLACK);
-    printchar(9, 0, 'l', COL_GREEN, COL_BLACK);
-    printchar(10, 0, 'd', COL_GREEN, COL_BLACK);
+
+    INFO("hello word!\n");
+    ERROR("hello word!\n");
+    WARRING("hello word!\n");
     while(1);
 }

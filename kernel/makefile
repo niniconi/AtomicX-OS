@@ -8,7 +8,7 @@ head.o:head.S
 kernel.o:kernel.c
 	gcc -mcmodel=large -fno-builtin -m64 -c kernel.c -o kernel.o
 print.o:print.c
-	gcc -mcmodel=large -fno-builtin -m64 -c print.c -o print.o
+	gcc -mcmodel=large -fno-builtin -m64 -c print.c -o print.o -fno-stack-protector
 
 kernel.elf:$(OBJ)
 	ld -b elf64-x86-64 -o kernel.elf $(OBJ) -T Kernel.lds
