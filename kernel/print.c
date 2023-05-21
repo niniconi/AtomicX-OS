@@ -91,6 +91,7 @@ int vsprintf(char *buf,const char * format,va_list ap){
                     break;
             }
             format++;
+            continue;
         }
         *(buf++) = *format;
         format++;
