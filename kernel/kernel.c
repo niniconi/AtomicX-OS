@@ -27,13 +27,13 @@ void kernel(){
 
     info("");
     cpuid(0x80000002, 0x00, a, b, c, d);
-    color_print(COL_BLACK, COL_BLACK, "%s", cpuid_buf);
+    color_print(COL_WHITE, COL_BLACK, "%s", cpuid_buf);
     cpuid(0x80000003, 0x00, a, b, c, d);
-    color_print(COL_BLACK, COL_BLACK, "%s", cpuid_buf);
+    color_print(COL_WHITE, COL_BLACK, "%s", cpuid_buf);
     cpuid(0x80000004, 0x00, a, b, c, d);
-    color_print(COL_BLACK, COL_BLACK, "%s", cpuid_buf);
+    color_print(COL_WHITE, COL_BLACK, "%s", cpuid_buf);
     cpuid(0x80000008, 0x00, a, b, c, d);
-    color_print(COL_BLACK, COL_BLACK, "%s\n", cpuid_buf);
+    color_print(COL_WHITE, COL_BLACK, "%s\n", cpuid_buf);
 
     while(1);
 }

@@ -26,7 +26,60 @@ ENTRY(_start)
     movq $0x101000,%rax
     movq %rax,%cr3
 
+    // set the default idt
+    call set_default_idt
+
     jmp kernel
+
+set_default_idt:
+    leaq IDT(%rip),%rdx
+    leaq default_interupt(%rip),%rax
+
+    //get phy offset of default_interupt
+    shlq $16,%rax
+    shrq $16,%rax
+    movq %rax,%rbx
+    //set offset [15:00]
+    shlq $48,%rax
+    shrq $48,%rax
+    //set offset [31:16]
+    shrq $16,%rbx
+    shlq $48,%rbx
+    orq %rbx,%rax
+
+    //set segment selector [31:16]
+    movq $0x08,%rbx
+    shlq $16,%rbx
+    orq %rbx,%rax
+
+    movq $0xe00,%rbx
+    shlq $32,%rbx
+    orq %rbx,%rax
+
+    movq $0x08,%rbx
+    shlq $44,%rbx
+    orq %rbx,%rax
+
+    movq $256,%rcx
+    _set_idt:
+        movq %rax,(%rdx)
+        addq $0x08,%rdx
+        movq $0x00,(%rdx)
+        addq $0x08,%rdx
+    loop _set_idt
+    ret
+
+ENTRY(default_interupt)
+    movq $0x00ff0000,%rdi
+    movq $0x00000000,%rsi
+    leaq default_interupt_msg(%rip),%rdx
+    movq $0,%rax
+    callq color_print
+    loop:
+        jmp loop
+
+default_interupt_msg:
+    .asciz "unexpected interrupt number...\n\0"
 
 .org 0x1000
 __PML4T:
