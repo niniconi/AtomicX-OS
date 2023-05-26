@@ -125,7 +125,10 @@ void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,..
         switch (*buf) {
             case '\n':
                 pos.y++;
-                if(pos.y >= pos.height/pos.charys)roll(ROLL_DOWN, 1);
+                if(pos.y >= pos.height/pos.charys){
+                    roll(ROLL_DOWN, 1);
+                    pos.y--;
+                }
                 pos.x=0;
                 continue;
             case '\b':
@@ -138,7 +141,10 @@ void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,..
                     printchar(pos.x++, pos.y, ' ', bkcolor, bgcolor);
                     if(pos.x >= pos.width/pos.charxs){
                         pos.y++;
-                        if(pos.y >= pos.height/pos.charys)roll(ROLL_DOWN, 1);
+                        if(pos.y >= pos.height/pos.charys){
+                            roll(ROLL_DOWN, 1);
+                            pos.y--;
+                        }
                         pos.x=0;
                         break;
                     }
@@ -149,7 +155,10 @@ void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,..
         pos.x++;
         if(pos.x >= pos.width/pos.charxs){
             pos.y++;
-            if(pos.y >= pos.height/pos.charys)roll(ROLL_DOWN, 1);
+            if(pos.y >= pos.height/pos.charys){
+                roll(ROLL_DOWN, 1);
+                pos.y--;
+            }
             pos.x=0;
         }
     }

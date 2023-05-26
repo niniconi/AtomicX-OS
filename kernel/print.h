@@ -45,6 +45,12 @@
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
     }while(0) \
 
+#define debug(msg,args...) \
+    do{ \
+        color_print(COL_BLUE,COL_BLACK,"[debug    ]:");\
+        color_print(COL_WHITE,COL_BLACK,msg,##args);\
+    }while(0) \
+
 struct position{
     int x,y;
     int width,height;
