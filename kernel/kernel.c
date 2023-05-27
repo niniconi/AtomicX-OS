@@ -1,5 +1,6 @@
 #include "print.h"
 #include "lib.h"
+#include "trap.h"
 
 void kernel(){
     pos.x=0;
@@ -34,6 +35,9 @@ void kernel(){
     color_print(COL_WHITE, COL_BLACK, "%s", cpuid_buf);
     cpuid(0x80000008, 0x00, a, b, c, d);
     color_print(COL_WHITE, COL_BLACK, "%s\n", cpuid_buf);
+
+    info("init trap\n");
+    init_trap();
 
     while(1);
 }
