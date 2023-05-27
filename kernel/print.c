@@ -7,9 +7,9 @@ struct position pos;
 
 char buf[4096];
 
-extern int inline todigital(const char *s){
+extern int inline todigital(const char **s){
     int ret = 0;
-    while(*s >='0' && *s <= '9')ret=ret*10+*(s++) - '0';
+    while(**s >='0' && **s <= '9')ret=ret*10+*((*s)++) - '0';
     return ret;
 }
 int number(char * buf,unsigned long number,unsigned long flags,unsigned int R,unsigned int bit_length){
@@ -61,13 +61,13 @@ int vsprintf(char *buf,const char * format,va_list ap){
                 case '#':
                     flags |= NUM_XSIGN;
                     if(*(++format) == '0'){
-                        bit_length = todigital(++format);
+                        format++;
+                        bit_length = todigital(&format);
                         flags |= NUM_ZERO | NUM_LEFT;
                     }else{
-                        bit_length = todigital(format);
+                        bit_length = todigital(&format);
                         flags |= NUM_SPACE | NUM_RIGHT;
                     }
-                    format++;
                     break;
                 case '0':
                     break;
