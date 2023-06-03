@@ -1,4 +1,4 @@
-# Atomic OS
+# AtomicX OS
 
 这是一个X86 64位现代操作系统项目
 
