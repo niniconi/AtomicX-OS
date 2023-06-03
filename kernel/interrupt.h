@@ -1,6 +1,14 @@
 #ifndef __INTERRUPT_H
 #define __INTERRUPT_H
 
+struct intr_handle{
+    unsigned long nr;
+    void (*handle)(unsigned long nr);
+    void (*install)();
+    void (*uninstall)();
+    unsigned long flags;
+};
+
 #define SAVEL_ALL \
     "pushq %r15 \n\t" \
     "pushq %r14 \n\t" \
@@ -46,9 +54,12 @@
     __asm__( \
             STR_LABEL(IRQ_handle##IRQ)":\n\t" \
             SAVEL_ALL \
-            "movq " STR_LABEL(IRQ) ",%rdi \n\t"\
+            "movq $" STR_LABEL(IRQ) ",%rdi \n\t"\
             "call do_IRQ \n\t" \
             RESTORE_ALL )
 
 void init_8259A();
+void register_intr_handle(unsigned long nr,void (*handle)(unsigned long nr),void (*install)(),void (*uninstall)(),unsigned long flags);
+void unregister_intr_handle(unsigned long nr);
+
 #endif

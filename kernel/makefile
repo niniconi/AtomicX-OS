@@ -1,4 +1,4 @@
-OBJ=head.o kernel.o print.o entry.o interrupt.o trap.o
+OBJ=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o
 BIN=kernel.bin
 DIR=../master
 FLAGS:=-mcmodel=large -fno-builtin -fno-pic -m64
@@ -17,6 +17,8 @@ interrupt.o:interrupt.c
 	gcc $(FLAGS) -c interrupt.c -o interrupt.o
 trap.o:trap.c
 	gcc $(FLAGS) -c trap.c -o trap.o
+keyboard.o:keyboard.c
+	gcc $(FLAGS) -c keyboard.c -o keyboard.o
 
 kernel.elf:$(OBJ)
 	ld -b elf64-x86-64 -z muldefs -o kernel.elf $(OBJ) -T Kernel.lds

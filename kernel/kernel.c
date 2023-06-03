@@ -1,3 +1,4 @@
+#include "keyboard.h"
 #include "print.h"
 #include "lib.h"
 #include "trap.h"
@@ -43,6 +44,8 @@ void kernel(){
     info("init interrupt\n");
     init_interrupt();
     debug("build time(%s)\n",__TIME__);
+
+    register_intr_handle(0x21, keyboard_handle, NULL, NULL, 0);
 
     while(1);
 }

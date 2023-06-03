@@ -55,14 +55,39 @@ void (*IRQ_handles[0x18])(void)={
     IRQ_NAME(0x37)
 };
 
+struct intr_handle handles[0x18];
+
 void do_IRQ(unsigned long nr){
     interrupt("this is IRQ%#02x\n",nr);
+    handles[nr-0x20].handle(nr);
+}
+
+void register_intr_handle(unsigned long nr,void (*handle)(unsigned long nr),void (*install)(),void (*uninstall)(),unsigned long flags){
+    struct intr_handle * hdle = &handles[nr-0x20];
+    hdle->nr = nr;
+    hdle->handle = handle;
+    hdle->install = install;
+    hdle->uninstall = uninstall;
+    hdle->flags = flags;
+
+    if(hdle->install != NULL)hdle->install();
+}
+
+void unregister_intr_handle(unsigned long nr){
+    struct intr_handle * hdle = &handles[nr-0x20];
+    hdle->nr = 0;
+    hdle->handle = NULL;
+    hdle->install = NULL;
+    hdle->uninstall = NULL;
+    hdle->flags = 0;
+
+    if(hdle->uninstall != NULL)hdle->uninstall();
 }
 
 void init_8259A(){
     int i;
-    for (i=0x21; i<=0x37; i++) {
-        set_intr_gate(i, IRQ_handles[i-0x21]);
+    for (i=0x20; i<=0x37; i++) {
+        set_intr_gate(i, IRQ_handles[i-0x20]);
     }
 
     //set master 8259A
