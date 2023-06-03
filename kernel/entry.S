@@ -138,7 +138,7 @@ SAVEL_ALL:
     pushq %rcx
     pushq %rbx
     pushq %rax
-    ret
+    jmpq 0x78(%rsp)
 RESTORE_ALL:
     popq %rax
     popq %rbx
