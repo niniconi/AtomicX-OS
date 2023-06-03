@@ -3,7 +3,7 @@
 #include "gate.h"
 #include "trap.h"
 
-void do_div_error(unsigned long error_code,regs * regs){
+void do_div_error(regs * regs,unsigned long error_code){
     error("DIV 0 error code : %#016x\n",error_code);
     while(1);
 }
@@ -85,24 +85,24 @@ void do_VM_exception(regs * regs){
 }
 
 void init_trap(){
-    _set_trap0_gate(0,div_error);
-    _set_trap0_gate(1,debug_exception);
-    _set_intr_gate(2,nmi);
-    _set_trap3_gate(3,breakpoint);
-    _set_trap3_gate(4,overflow);
-    _set_trap3_gate(5,out_bounds);
-    _set_trap0_gate(6,undefine);
-    _set_trap0_gate(7,device_exception);
-    _set_trap0_gate(8,double_error);
-    _set_trap0_gate(9,coprocessor_error);
-    _set_trap0_gate(10,invaild_tss);
-    _set_trap0_gate(11,undefine_segment);
-    _set_trap0_gate(12,SS_segment_error);
-    _set_trap0_gate(13,general_protect);
-    _set_trap0_gate(14,invaild_page);
-    _set_trap0_gate(16,x87_FPU);
-    _set_trap0_gate(17,alignment_check);
-    _set_trap0_gate(18,mechine_check);
-    _set_trap0_gate(19,SIMD_float_exception);
-    _set_trap0_gate(20,VM_exception);
+    set_trap0_gate(0,div_error);
+    set_trap0_gate(1,debug_exception);
+    set_intr_gate(2,nmi);
+    set_trap3_gate(3,breakpoint);
+    set_trap3_gate(4,overflow);
+    set_trap3_gate(5,out_bounds);
+    set_trap0_gate(6,undefine);
+    set_trap0_gate(7,device_exception);
+    set_trap0_gate(8,double_error);
+    set_trap0_gate(9,coprocessor_error);
+    set_trap0_gate(10,invaild_tss);
+    set_trap0_gate(11,undefine_segment);
+    set_trap0_gate(12,SS_segment_error);
+    set_trap0_gate(13,general_protect);
+    set_trap0_gate(14,invaild_page);
+    set_trap0_gate(16,x87_FPU);
+    set_trap0_gate(17,alignment_check);
+    set_trap0_gate(18,mechine_check);
+    set_trap0_gate(19,SIMD_float_exception);
+    set_trap0_gate(20,VM_exception);
 }

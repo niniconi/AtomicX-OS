@@ -1,7 +1,7 @@
 OBJ=head.o kernel.o print.o entry.o interrupt.o trap.o
 BIN=kernel.bin
 DIR=../master
-FLAGS:=-mcmodel=large -fno-builtin -m64
+FLAGS:=-mcmodel=large -fno-builtin -fno-pic -m64
 
 head.o:head.S
 	gcc -E head.S > _head.S

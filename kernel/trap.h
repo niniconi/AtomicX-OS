@@ -23,7 +23,7 @@ extern void mechine_check();
 extern void SIMD_float_exception();
 extern void VM_exception();
 
-void do_div_error(unsigned long error_code,regs * regs);
+void do_div_error(regs * regs,unsigned long error_code);
 void do_debug_exception(regs * regs);
 void do_nmi(regs * regs);
 void do_breakpoint(regs * regs);

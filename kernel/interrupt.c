@@ -1,0 +1,85 @@
+#include "interrupt.h"
+#include "gate.h"
+#include "lib.h"
+#include "print.h"
+
+IRQ(0x20);
+IRQ(0x21);
+IRQ(0x22);
+IRQ(0x23);
+IRQ(0x24);
+IRQ(0x25);
+IRQ(0x26);
+IRQ(0x27);
+IRQ(0x28);
+IRQ(0x29);
+IRQ(0x2a);
+IRQ(0x2b);
+IRQ(0x2c);
+IRQ(0x2d);
+IRQ(0x2e);
+IRQ(0x2f);
+IRQ(0x30);
+IRQ(0x31);
+IRQ(0x32);
+IRQ(0x33);
+IRQ(0x34);
+IRQ(0x35);
+IRQ(0x36);
+IRQ(0x37);
+
+void (*IRQ_handles[0x18])(void)={
+    IRQ_NAME(0x20),
+    IRQ_NAME(0x21),
+    IRQ_NAME(0x22),
+    IRQ_NAME(0x23),
+    IRQ_NAME(0x24),
+    IRQ_NAME(0x25),
+    IRQ_NAME(0x26),
+    IRQ_NAME(0x27),
+    IRQ_NAME(0x28),
+    IRQ_NAME(0x29),
+    IRQ_NAME(0x2a),
+    IRQ_NAME(0x2b),
+    IRQ_NAME(0x2c),
+    IRQ_NAME(0x2d),
+    IRQ_NAME(0x2e),
+    IRQ_NAME(0x2f),
+    IRQ_NAME(0x30),
+    IRQ_NAME(0x31),
+    IRQ_NAME(0x32),
+    IRQ_NAME(0x33),
+    IRQ_NAME(0x34),
+    IRQ_NAME(0x35),
+    IRQ_NAME(0x36),
+    IRQ_NAME(0x37)
+};
+
+void do_IRQ(unsigned long nr){
+    interrupt("this is IRQ%#02x\n",nr);
+}
+
+void init_8259A(){
+    int i;
+    for (i=0x21; i<=0x37; i++) {
+        set_intr_gate(i, IRQ_handles[i-0x21]);
+    }
+
+    //set master 8259A
+    io_out8(0x20, 0x11);
+    io_out8(0x21, 0x20);
+    io_out8(0x21, 0x04);
+    io_out8(0x21, 0x01);
+
+    //set slave 8259A
+    io_out8(0xa0, 0x11);
+    io_out8(0xa1, 0x28);
+    io_out8(0xa1, 0x02);
+    io_out8(0xa1, 0x01);
+
+    //set slave/master 8259A
+    io_out8(0x21, 0xfd);
+    io_out8(0xa1, 0xff);
+
+    sti();
+}

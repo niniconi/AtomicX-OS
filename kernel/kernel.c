@@ -1,6 +1,7 @@
 #include "print.h"
 #include "lib.h"
 #include "trap.h"
+#include "interrupt.h"
 
 void kernel(){
     pos.x=0;
@@ -38,6 +39,10 @@ void kernel(){
 
     info("init trap\n");
     init_trap();
+
+    info("init interrupt\n");
+    init_interrupt();
+    debug("build time(%s)\n",__TIME__);
 
     while(1);
 }

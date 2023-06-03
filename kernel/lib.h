@@ -23,6 +23,38 @@ extern void inline memcpy(void * source,void *destination,unsigned long size){
             :);
 }
 
+extern void inline io_out8(int port,char data){
+    __asm__ __volatile__(
+            "outb %%al,%%edx \n\t"
+            :
+            :"a"(data),"d"(port)
+            :);
+}
+extern void inline io_out32(int port,int data){
+    __asm__ __volatile__(
+            "outl %%eax,%%edx\n\t"
+            :
+            :"a"(data),"d"(port)
+            :);
+}
+extern char inline io_in8(int port){
+    register char ret;
+    __asm__ __volatile__(
+            "inb %%edx,%0 \n\t"
+            :"=r"(ret)
+            :"d"(port)
+            :);
+    return ret;
+}
+extern int inline io_in32(int port){
+    register int ret;
+    __asm__ __volatile__(
+            "inl %%edx,%0 \n\t"
+            :"=r"(ret)
+            :"d"(port)
+            :);
+}
+
 typedef struct regs{
     unsigned long rax;
     unsigned long rbx;
