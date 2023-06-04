@@ -73,4 +73,34 @@ typedef struct regs{
     unsigned long r15;
 }regs;
 
+#define INIT_ARRAY_QUEUE(len) { \
+    .length = len, \
+    .head =  len - 1, \
+    .tail = 0, \
+    .amount = 0 \
+}
+
+typedef struct array_queue{
+    int head,tail;
+    int amount;
+    int length;
+    char data[128];
+}array_queue;
+
+extern char inline queue_get(array_queue * queue){
+    if(queue->amount == 0) return 0;
+    int index = queue->tail;
+    if(index >= queue->length - 1)queue->tail=0;
+    else queue->tail++;
+    queue->amount--;
+    return queue->data[index];
+}
+extern void inline queue_put(array_queue * queue,char data){
+    if(queue->amount == queue->length) return;
+    if(queue->head >= queue->length - 1)queue->head = 0;
+    else queue->head++;
+    queue->data[queue->head] = data;
+    queue->amount++;
+}
+
 #endif
