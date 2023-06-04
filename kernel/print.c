@@ -15,10 +15,10 @@ extern int inline todigital(const char **s){
 int number(char * buf,unsigned long number,unsigned long flags,unsigned int R,unsigned int bit_length){
     int i,length=bit_length,num_length;
     unsigned long tmp;
-    char *num_sys = "0123456789abcdefghijklmnopqrstuvwxyz";
+    char *num_sys = NULL;
 
-    if(flags & NUM_CAPITAL)
-        for(i=10;i<36;i++)*(num_sys+i) -= 32;
+    if(flags & NUM_CAPITAL)num_sys = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    else num_sys = "0123456789abcdefghijklmnopqrstuvwxyz";
     if(R<2 || R > 36)return 0;
 
     for(num_length=0,tmp=number;tmp!=0;num_length++)
@@ -76,6 +76,14 @@ int vsprintf(char *buf,const char * format,va_list ap){
                 case 'd':
                     buf += number(buf, va_arg(ap,int), 0, 10,bit_length);
                     break;
+                case 'l':
+                    format++;
+                    switch (*format) {
+                        case 'd':
+                            buf += number(buf, va_arg(ap, long), 0, 10, bit_length);
+                            break;
+                    }
+                    break;
                 case 'x':
                     buf += number(buf, va_arg(ap, long), flags, 16,bit_length);
                     break;
@@ -88,6 +96,9 @@ int vsprintf(char *buf,const char * format,va_list ap){
                 case 's':
                     for (char *str = va_arg(ap,char *); *str != '\0'; str++)
                         *buf++=*str;
+                    break;
+                case '%':
+                    *buf++='%';
                     break;
             }
             format++;
