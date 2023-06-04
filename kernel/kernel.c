@@ -4,6 +4,8 @@
 #include "trap.h"
 #include "interrupt.h"
 
+extern array_queue keyboard_buf;
+
 void kernel(){
     pos.x=0;
     pos.y=0;
@@ -47,5 +49,6 @@ void kernel(){
 
     register_intr_handle(0x21, keyboard_handle, NULL, NULL, 0);
 
-    while(1);
+    unsigned char key;
+    while(1)if((key=queue_get(&keyboard_buf)) != 0)info("input key %#08x\n", key);
 }
