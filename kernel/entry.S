@@ -1,8 +1,35 @@
 #include "link.h"
 
+/*
+    The following is the stack memory distribution,After calling SAVEL_ALL
+*/
+SS = 0xa8
+ESP = 0xa0
+EFLAGS = 0x98
+CS = 0x90
+RIP = 0x88
+ERRCODE = 0x80
+FUNC = 0x78 //SAVEL_ALL return address
+R15 = 0x70
+R14 = 0x68
+R13 = 0x60
+R12 = 0x58
+R11 = 0x50
+R10 = 0x48
+R9 = 0x40
+R8 = 0x38
+RDI = 0x30
+RSI = 0x28
+RBP = 0x20
+RDX = 0x18
+RCX = 0x10
+RBX = 0x08
+RAX = 0x00
+REGS = 0x00
+
 ENTRY(div_error)
-    movq (%rsp),%rsi// get error code
     call SAVEL_ALL
+    movq ERRCODE(%rsp),%rsi
     movq %rsp,%rdi//get regs
     leaq do_div_error(%rip),%rax
     call *%rax
@@ -15,6 +42,7 @@ ENTRY(debug_exception)
     jmp RESTORE_ALL
 ENTRY(nmi)
     call SAVEL_ALL
+    movq ERRCODE(%rsp),%rsi
     movq %rsp,%rdi//get regs
     leaq do_nmi(%rip),%rax
     call *%rax
@@ -81,14 +109,17 @@ ENTRY(SS_segment_error)
     jmp SAVEL_ALL
 ENTRY(general_protect)
     call SAVEL_ALL
+    movq ERRCODE(%rsp),%rsi
     movq %rsp,%rdi//get regs
     leaq do_general_protect(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
-ENTRY(invaild_page)
+ENTRY(page_fault)
     call SAVEL_ALL
+    movq ERRCODE(%rsp),%rsi
     movq %rsp,%rdi//get regs
-    leaq do_invaild_page(%rip),%rax
+    movq RIP(%rsp),%rdx
+    leaq do_page_fault(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(x87_FPU)
@@ -138,7 +169,7 @@ SAVEL_ALL:
     pushq %rcx
     pushq %rbx
     pushq %rax
-    jmpq *0x78(%rsp)
+    jmpq *FUNC(%rsp)
 RESTORE_ALL:
     popq %rax
     popq %rbx
