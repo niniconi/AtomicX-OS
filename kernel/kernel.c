@@ -47,8 +47,8 @@ void kernel(){
     init_interrupt();
     debug("build time(%s)\n",__TIME__);
 
-    register_intr_handle(0x21, keyboard_handle, NULL, NULL, 0);
 
-    unsigned char key;
-    while(1)if((key=queue_get(&keyboard_buf)) != 0)info("input key %#08x\n", key);
+    register_intr_handle(0x21, keyboard_handle,init_keybord, NULL, 0);
+
+    while (1)analysis_keycode();
 }

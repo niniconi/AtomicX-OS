@@ -24,9 +24,17 @@ struct intr_handle{
     "pushq %rdx \n\t" \
     "pushq %rcx \n\t" \
     "pushq %rbx \n\t" \
+    "pushq %rax \n\t" \
+    "movq %es,%rax \n\t" \
+    "pushq %rax \n\t" \
+    "movq %ds,%rax \n\t" \
     "pushq %rax \n\t"
 
 #define RESTORE_ALL \
+    "popq %rax \n\t" \
+    "movq %rax,%ds \n\t" \
+    "popq %rax \n\t" \
+    "movq %rax,%es \n\t" \
     "popq %rax \n\t" \
     "popq %rbx \n\t" \
     "popq %rcx \n\t" \

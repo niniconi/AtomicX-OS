@@ -56,6 +56,8 @@ extern int inline io_in32(int port){
 }
 
 typedef struct regs{
+    unsigned long ds;
+    unsigned long es;
     unsigned long rax;
     unsigned long rbx;
     unsigned long rcx;

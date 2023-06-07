@@ -12,8 +12,8 @@ extern int inline todigital(const char **s){
     while(**s >='0' && **s <= '9')ret=ret*10+*((*s)++) - '0';
     return ret;
 }
-int number(char * buf,unsigned long number,unsigned long flags,unsigned int R,unsigned int bit_length){
-    int i,length=bit_length,num_length;
+int number(char * buf,unsigned long number,unsigned long flags,unsigned int R,unsigned int length){
+    int i,num_length;
     unsigned long tmp;
     char *num_sys = NULL;
 
@@ -23,6 +23,7 @@ int number(char * buf,unsigned long number,unsigned long flags,unsigned int R,un
 
     for(num_length=0,tmp=number;tmp!=0;num_length++)
         tmp /= R;
+    if(num_length == 0) num_length = 1;
     if (length == 0) length = num_length;
 
     if(flags & NUM_XSIGN && flags & NUM_LEFT){

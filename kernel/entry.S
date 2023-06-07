@@ -3,28 +3,30 @@
 /*
     The following is the stack memory distribution,After calling SAVEL_ALL
 */
-SS = 0xa8
-ESP = 0xa0
-EFLAGS = 0x98
-CS = 0x90
-RIP = 0x88
-ERRCODE = 0x80
-FUNC = 0x78 //SAVEL_ALL return address
-R15 = 0x70
-R14 = 0x68
-R13 = 0x60
-R12 = 0x58
-R11 = 0x50
-R10 = 0x48
-R9 = 0x40
-R8 = 0x38
-RDI = 0x30
-RSI = 0x28
-RBP = 0x20
-RDX = 0x18
-RCX = 0x10
-RBX = 0x08
-RAX = 0x00
+SS = 0xb8
+RSP = 0xb0
+EFLAGS = 0xa8
+CS = 0xa0
+RIP = 0x98
+ERRCODE = 0x90
+FUNC = 0x88 //SAVEL_ALL return address
+R15 = 0x80
+R14 = 0x78
+R13 = 0x70
+R12 = 0x68
+R11 = 0x60
+R10 = 0x58
+R9 = 0x50
+R8 = 0x48
+RDI = 0x40
+RSI = 0x38
+RBP = 0x30
+RDX = 0x28
+RCX = 0x20
+RBX = 0x18
+RAX = 0x10
+ES = 0x08
+DS = 0x00
 REGS = 0x00
 
 ENTRY(div_error)
@@ -169,8 +171,16 @@ SAVEL_ALL:
     pushq %rcx
     pushq %rbx
     pushq %rax
+    movq %es,%rax
+    pushq %rax
+    movq %ds,%rax
+    pushq %rax
     jmpq *FUNC(%rsp)
 RESTORE_ALL:
+    popq %rax
+    movq %rax,%ds
+    popq %rax
+    movq %rax,%es
     popq %rax
     popq %rbx
     popq %rcx

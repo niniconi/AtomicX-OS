@@ -166,8 +166,8 @@ void analysis_keycode(){
         return;
     }
     if(key & BREAK_FLAG){//BREAK CODE
-        info("REPLASE KEY %c\n",scancode_map[key & BREAK_MASIK]);
+        info("KEY=%#x REPLASE KEY %c\n",key,scancode_map[key & BREAK_MASIK]);
     }else{//MAKE CODE
-        info("PRESS KEY %c\n",scancode_map[key & BREAK_MASIK]);
+        info("KEY=%#x PRESS KEY %c\n",key,scancode_map[key & BREAK_MASIK]);
     }
 }

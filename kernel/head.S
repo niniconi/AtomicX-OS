@@ -26,6 +26,14 @@ ENTRY(_start)
     movq $0x101000,%rax
     movq %rax,%cr3
 
+    movq $0x10,%rax
+    mov %rax,%ds
+    mov %rax,%es
+    mov %rax,%gs
+    mov %rax,%fs
+    mov %rax,%ss
+    movq $0xffff800000007c00,%rsp
+
     // set the default idt
     call set_default_idt
 
