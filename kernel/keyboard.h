@@ -4,12 +4,33 @@
 #define KB_DATA_PORT 0x60
 #define KB_CTRL_PORT 0x64
 
-#define KB_CMD_RDKEY 0x20
-#define KB_CMD_CONF 0x60
-#define KB_CMD_MOUSE_FORBID 0xa7
-#define KB_CMD_MOUSE_ALLOW 0xa8
-#define KB_CMD_REBOOT 0xef
+/*
+ * send control command to 0x64(KB_CTRL_PORT),send param to 0x60(KB_DATA_PORT),return from 0x60(KB_DATA_PORT)
+ */
+#define IKB_CMD_RDKEY 0x20
+#define IKB_CMD_CONF 0x60
+#define IKB_CMD_MOUSE_FORBID 0xa7
+#define IKB_CMD_MOUSE_ALLOW 0xa8
+#define IKB_CMD_SYSREBOOT 0xef
+
+/*
+ * send conrtrol command to 0x60(KB_DATA_PORT),send param to 0x60(KB_DATA_PORT),return from 0xfa
+ */
+#define KB_CMD_REBOOT 0xff
+#define KB_CMD_RESEND 0xfe
+#define KB_CMD_DEFAULTSPEED 0xf6
+#define KB_CMD_CLOSESCAN 0xf5
+#define KB_CMD_OPENSCAN 0xf4
+#define KB_CMD_SETSCANCODE 0xf0
+
+#define BREAK_FLAG 0x80
+#define BREAK_MASIK 0x7f
+
+#define NR_SCANCODE 128
+#define PRIFIX_CODE 0xe0
 
 void keyboard_handle(unsigned long nr);
+void init_keybord();
+void analysis_keycode();
 
 #endif
