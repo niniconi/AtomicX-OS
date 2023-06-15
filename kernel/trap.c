@@ -4,7 +4,7 @@
 #include "trap.h"
 
 void do_div_error(regs * regs,unsigned long error_code){
-    error("div(0)  ERRCODE=%#016x\n",error_code);
+    error("div(0)  ERRCODE=%#018x\n",error_code);
     while(1);
 }
 void do_debug_exception(regs * regs){
@@ -12,7 +12,7 @@ void do_debug_exception(regs * regs){
     while(1);
 }
 void do_nmi(regs * regs,unsigned long error_code){
-    interrupt("nmi(2) ERRCODE=%#016x\n",error_code);
+    interrupt("nmi(2) ERRCODE=%#018x\n",error_code);
     while(1);
 }
 void do_breakpoint(regs * regs){
@@ -56,11 +56,11 @@ void do_SS_segment_error(regs * regs){
     while(1);
 }
 void do_general_protect(regs * regs,unsigned long error_code){
-    error("general protect(13)  ERRCODE=%#016x\n",error_code);
+    error("general protect(13)  ERRCODE=%#018x\n",error_code);
     while(1);
 }
 void do_page_fault(regs * regs,unsigned long error_code,unsigned long rip){
-    error("page fault(14)  ERRCODE=%#016x RIP=%#016x ",error_code,rip);
+    error("page fault(14)  ERRCODE=%#018x RIP=%#018x ",error_code,rip);
     if(!(error_code & 0x01))
         color_print(COL_RED, COL_BLACK, "page not exist,");
 

@@ -58,7 +58,7 @@ void (*IRQ_handles[0x18])(void)={
 struct intr_handle handles[0x18];
 
 void do_IRQ(unsigned long nr){
-    interrupt("this is IRQ%#02x\n",nr);
+    interrupt("do IRQ%#04x\n",nr);
     handles[nr-0x20].handle(nr);
 }
 

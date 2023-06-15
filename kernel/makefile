@@ -2,6 +2,7 @@ OBJ=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o
 BIN=kernel.bin
 DIR=../master
 FLAGS:=-mcmodel=large -fno-builtin -fno-pic -m64
+MACRO:=-DLOG_ERROR -DLOG_INFO -DLOG_WARRING -DLOG_DEBUG -DLOG_INTERRUPT
 
 head.o:head.S
 	gcc -E head.S > _head.S
@@ -10,15 +11,15 @@ entry.o:entry.S
 	gcc -E entry.S > _entry.S
 	as --64 -o entry.o _entry.S
 kernel.o:kernel.c
-	gcc $(FLAGS) -c kernel.c -o kernel.o
+	gcc $(FLAGS) $(MACRO) -c kernel.c -o kernel.o
 print.o:print.c
-	gcc $(FLAGS) -c print.c -o print.o -fno-stack-protector
+	gcc $(FLAGS) $(MACRO) -c print.c -o print.o -fno-stack-protector
 interrupt.o:interrupt.c
-	gcc $(FLAGS) -c interrupt.c -o interrupt.o
+	gcc $(FLAGS) $(MACRO) -c interrupt.c -o interrupt.o
 trap.o:trap.c
-	gcc $(FLAGS) -c trap.c -o trap.o
+	gcc $(FLAGS) $(MACRO) -c trap.c -o trap.o
 keyboard.o:keyboard.c
-	gcc $(FLAGS) -c keyboard.c -o keyboard.o
+	gcc $(FLAGS) $(MACRO) -c keyboard.c -o keyboard.o
 
 kernel.elf:$(OBJ)
 	ld -b elf64-x86-64 -z muldefs -o kernel.elf $(OBJ) -T Kernel.lds

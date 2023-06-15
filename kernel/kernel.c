@@ -23,12 +23,12 @@ void kernel(){
     d=(unsigned int *)&cpuid_buf[0];
 
     cpuid(0x00, 0x00, a, b, c, d);
-    info("CPUID max base main-leaf id %#08x\n", *a);
+    info("CPUID max base main-leaf id %#010x\n", *a);
     info("CPU label %s\n", cpuid_buf);
     cpuid(0x01, 0x00, a, b, c, d);
-    info("CPU version infomation %#08x\n", *a);
+    info("CPU version infomation %#010x\n", *a);
     cpuid(0x80000000, 0x00, a, b, c, d);
-    info("CPUID max sub-leaf id %#08x\n", *a);
+    info("CPUID max sub-leaf id %#010x\n", *a);
 
     info("");
     cpuid(0x80000002, 0x00, a, b, c, d);

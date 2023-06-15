@@ -10,6 +10,15 @@
 #define COL_ORANGE  0x00ff9900
 #define COL_WHITE   0x00ffffff
 
+#define E_BKCOLFLAGS "0;38;2"
+#define E_COL_BLACK  "0;0;0"
+#define E_COL_BLUE   "0;0;255"
+#define E_COL_GREEN  "0;255;0"
+#define E_COL_RED    "255;0;0"
+#define E_COL_YELLOW "255;255;0"
+#define E_COL_ORANGE "255;153;0"
+#define E_COL_WHITE  "255;255;255"
+
 #define NUM_SIGN     0x01UL << 0
 #define NUM_CAPITAL  0x01UL << 1
 #define NUM_XSIGN    0x01UL << 3
@@ -21,35 +30,56 @@
 #define ROLL_UP      0x01UL << 0
 #define ROLL_DOWN    0x01UL << 1
 
+#ifdef LOG_ERROR
 #define error(msg,args...) \
     do{ \
         color_print(COL_RED,COL_BLACK,"[error    ]:");\
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
-    }while(0) \
+    }while(0)
+#else
+#define error(msg,args...) do{}while(0)
+#endif
 
+#ifdef LOG_INFO
 #define info(msg,args...) \
     do{ \
         color_print(COL_GREEN,COL_BLACK,"[info     ]:");\
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
-    }while(0) \
+    }while(0)
+#else
+#define info(msg,args...) do{}while(0)
+#endif
 
+#ifdef LOG_WARRING
 #define warring(msg,args...) \
     do{ \
         color_print(COL_ORANGE,COL_BLACK,"[warring  ]:");\
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
-    }while(0) \
+    }while(0)
+#else
+#define warring(msg,args...) do{}while(0)
+#endif
 
+#ifdef LOG_INTERRUPT
 #define interrupt(msg,args...) \
     do{ \
         color_print(COL_YELLOW,COL_BLACK,"[interrupt]:");\
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
-    }while(0) \
+    }while(0)
+#else
+#define interrupt(msg,args...) do{}while(0)
+#endif
 
+#ifdef LOG_DEBUG
 #define debug(msg,args...) \
     do{ \
         color_print(COL_BLUE,COL_BLACK,"[debug    ]:");\
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
-    }while(0) \
+    }while(0)
+#else
+#define debug(msg,args...) do{}while(0)
+#endif
+
 
 struct position{
     int x,y;
@@ -61,6 +91,7 @@ extern struct position pos;
 
 void printchar(int x,int y,char c,unsigned int bkcolor,unsigned int bgcolor);
 void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,...);
+#define print(format,args...) color_print(COL_WHITE,COL_BLACK,format,##args)
 int vsprintf(char *buf,const char * format,va_list ap);
 
 #endif

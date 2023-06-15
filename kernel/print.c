@@ -12,103 +12,162 @@ extern int inline todigital(const char **s){
     while(**s >='0' && **s <= '9')ret=ret*10+*((*s)++) - '0';
     return ret;
 }
-int number(char * buf,unsigned long number,unsigned long flags,unsigned int R,unsigned int length){
-    int i,num_length;
+
+int number(char ** buf,unsigned long number,unsigned long flags,unsigned int R,int data_width,int data_precision){
     unsigned long tmp;
-    char *num_sys = NULL;
+    const char * num_sys = "0123456789abcdefghijklmnopqrstuvwxyz";
+    char sign;//if sign => number < 0
+    int i;
 
-    if(flags & NUM_CAPITAL)num_sys = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    else num_sys = "0123456789abcdefghijklmnopqrstuvwxyz";
-    if(R<2 || R > 36)return 0;
-
-    for(num_length=0,tmp=number;tmp!=0;num_length++)
-        tmp /= R;
-    if(num_length == 0) num_length = 1;
-    if (length == 0) length = num_length;
-
-    if(flags & NUM_XSIGN && flags & NUM_LEFT){
-        *buf++='0';
-        *buf++='x';
+    if(flags & NUM_CAPITAL) num_sys = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    if(R<2 || R > 36) return 0;
+    if(flags & NUM_SIGN){
+        if(number & 0x8000000000000000){
+            sign = 1;
+            number = ~(number - 1);//abs(number)
+        }else sign = 0;
+    }
+    if(data_precision == 0)
+        for(tmp = number;tmp;data_precision++)tmp/=R;
+    if(data_width == 0 || data_width < data_precision){
+        data_width = data_precision;
+        if(flags & NUM_XSIGN)data_width += 2;
     }
 
-    for(i=0;i<length-num_length;i++){
-        if(flags & NUM_SPACE)*buf++=' ';
-        else if (flags & NUM_ZERO)*buf++='0';
+    if(flags & NUM_LEFT){
+        if(flags & NUM_SIGN){
+            if(sign)
+                *(*buf)++='-';
+            else
+                *(*buf)++='+';
+            data_width--;
+        }
+
+        if(flags & NUM_XSIGN){
+            *(*buf)++='0';
+            *(*buf)++='x';
+            data_width -= 2;
+        }
+
+        for (i=data_precision - 1;i>=0;number /= R,i--)
+            *((*buf)+i) = num_sys[number % R];
+        *buf += data_precision;
+        data_width -= data_precision;
+        for (i=0; i<data_width;i++) *(*buf)++ = ' ';
+    }else{
+        if(flags & NUM_ZERO){
+            if(flags & NUM_SIGN){
+                if(sign)
+                    *(*buf)++='-';
+                else
+                    *(*buf)++='+';
+                data_width--;
+            }
+            if (flags & NUM_XSIGN) {
+                *(*buf)++='0';
+                *(*buf)++='x';
+                data_width -= 2;
+            }
+            for (i=0;i<data_width-data_precision;i++)
+                *(*buf)++='0';
+        }else{
+            if(flags & NUM_XSIGN)
+                data_width -= 2;
+            for (i=0;i<data_width-data_precision;i++)
+                *(*buf)++ = ' ';
+
+            if(flags & NUM_SIGN){
+                if(sign)
+                    *(*buf)++='-';
+                else
+                    *(*buf)++='+';
+                data_width--;
+            }
+
+            if(flags & NUM_XSIGN){
+                *(*buf)++='0';
+                *(*buf)++='x';
+            }
+        }
+        for (i=data_precision - 1;i>=0;number /= R,i--)
+            *((*buf)+i) = num_sys[number % R];
+        *buf += data_precision;
+        data_width -= data_precision;
     }
-
-    if(flags & NUM_XSIGN && flags & NUM_RIGHT){
-        *buf++='0';
-        *buf++='x';
-    }
-
-    for(i=num_length - 1;i>=0;i--,number/=R)
-        *(buf+i)=num_sys[number % R];
-
-    if(flags & NUM_XSIGN)length+=2;
-    return length;
+    return 0;
 }
 
 int vsprintf(char *buf,const char * format,va_list ap){
     unsigned long flags;
-    int bit_length = 0;
+    int data_width = 0;
+    int data_precision = 0;
+
     while(*format != '\0'){
-        flags = 0;
-        if(*format == '%'){
-            format++;
-            switch (*format) {
-                case '-':
-                case '+':
-                case ' ':
-                case '#':
-                    flags |= NUM_XSIGN;
-                    if(*(++format) == '0'){
-                        format++;
-                        bit_length = todigital(&format);
-                        flags |= NUM_ZERO | NUM_LEFT;
-                    }else{
-                        bit_length = todigital(&format);
-                        flags |= NUM_SPACE | NUM_RIGHT;
-                    }
-                    break;
-                case '0':
-                    break;
-            }
-            switch(*format){
-                case 'd':
-                    buf += number(buf, va_arg(ap,int), 0, 10,bit_length);
-                    break;
-                case 'l':
-                    format++;
-                    switch (*format) {
-                        case 'd':
-                            buf += number(buf, va_arg(ap, long), 0, 10, bit_length);
-                            break;
-                    }
-                    break;
-                case 'x':
-                    buf += number(buf, va_arg(ap, long), flags, 16,bit_length);
-                    break;
-                case 'X':
-                    buf += number(buf, va_arg(ap, long), flags | NUM_CAPITAL, 16,bit_length);
-                    break;
-                case 'c':
-                    *buf++=va_arg(ap, long);
-                    break;
-                case 's':
-                    for (char *str = va_arg(ap,char *); *str != '\0'; str++)
-                        *buf++=*str;
-                    break;
-                case '%':
-                    *buf++='%';
-                    break;
-            }
-            format++;
+        if(*format != '%'){
+            *buf++ = *format++;
             continue;
         }
-        *(buf++) = *format;
+        flags = 0;
+REPEAT:
+        format++;
+        switch (*format) {
+                case '-':
+                    flags |= NUM_LEFT;
+                    goto REPEAT;
+                case '+':
+                    flags |= NUM_SIGN;
+                    goto REPEAT;
+                case ' ':
+                    flags |= NUM_SPACE;
+                    goto REPEAT;
+                case '#':
+                    flags |= NUM_XSIGN;
+                    goto REPEAT;
+                case '0':
+                    flags |= NUM_ZERO;
+                    goto REPEAT;
+        }
+        data_width = todigital(&format);
+        if(*format == '.'){
+            format++;
+            data_precision = todigital(&format);
+        }
+        switch(*format){
+            case 'o':
+                number(&buf, (unsigned long)va_arg(ap, int), flags, 8,data_width,data_precision);
+                break;
+            case 'i':
+            case 'd':
+                number(&buf, (unsigned long)va_arg(ap, int), flags | NUM_SIGN, 10,data_width,data_precision);
+                break;
+            case 'l':
+                format++;
+                switch (*format) {
+                    case 'd':
+                        number(&buf, (unsigned long)va_arg(ap, long), flags | NUM_SIGN, 10, data_width,data_precision);
+                        break;
+                }
+                break;
+            case 'x':
+                number(&buf, (unsigned long)va_arg(ap, long), flags & ~NUM_SIGN, 16,data_width,data_precision);
+                break;
+            case 'X':
+                number(&buf, (unsigned long)va_arg(ap, long), flags | NUM_CAPITAL & ~NUM_SIGN, 16,data_width,data_precision);
+                break;
+            case 'c':
+                *buf++=va_arg(ap, long);
+                break;
+            case 's':
+                for (char *str = va_arg(ap,char *); *str != '\0'; str++)
+                    *buf++=*str;
+                break;
+            case '%':
+                *buf++='%';
+                break;
+        }
         format++;
     }
-    *(buf++) = '\0';
+    *buf++='\0';
     return 0;
 }
 
@@ -159,6 +218,33 @@ void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,..
                         }
                         pos.x=0;
                         break;
+                    }
+                }
+                continue;
+            case '\e':
+                buf++;
+                if(*buf == '['){
+                    buf++;
+                    unsigned int tmp = 0;
+                    if((*(long *)buf << 8) >>8 == *(long *)"0;38;2;"){
+                        buf += 7;
+                        tmp |= todigital((const char **)&buf) << 16;
+                        if(*buf++ != ';')continue;
+                        tmp |= todigital((const char **)&buf) << 8;
+                        if(*buf++ != ';')continue;
+                        tmp |= todigital((const char **)&buf);
+                        if(*buf != 'm')continue;
+                        bkcolor = tmp;
+                    }else{
+                        unsigned int x,y;
+                        x = todigital((const char **)&buf);
+                        if(*buf++ != ';')continue;
+                        y = todigital((const char **)&buf);
+                        if(*buf != 'H')continue;
+                        if(x >= pos.width/pos.charxs)x=pos.width/pos.charxs-1;
+                        if(y >= pos.height/pos.charys)y=pos.height/pos.charys-1;
+                        pos.x = x;
+                        pos.y = y;
                     }
                 }
                 continue;
