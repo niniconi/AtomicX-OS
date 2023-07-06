@@ -26,6 +26,14 @@ ENTRY(_start)
     movq $0x101000,%rax
     movq %rax,%cr3
 
+    movq switch_seg(%rip),%rax
+    pushq $0x08
+    pushq %rax
+    lretq
+
+switch_seg:
+    .quad entry_64
+entry_64:
     movq $0x10,%rax
     mov %rax,%ds
     mov %rax,%es

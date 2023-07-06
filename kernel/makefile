@@ -1,8 +1,8 @@
-OBJ=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o
+OBJ=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o disk.o
 BIN=kernel.bin
 DIR=../master
 FLAGS:=-mcmodel=large -fno-builtin -fno-pic -m64
-MACRO:=-DLOG_ERROR -DLOG_INFO -DLOG_WARRING -DLOG_DEBUG -DLOG_INTERRUPT
+MACRO:=-DLOG_ERROR -DLOG_INFO -DLOG_WARRING -DLOG_DEBUG -DLOG_INTERRUPT -D_DEBUG
 
 head.o:head.S
 	gcc -E head.S > _head.S
@@ -20,6 +20,8 @@ trap.o:trap.c
 	gcc $(FLAGS) $(MACRO) -c trap.c -o trap.o
 keyboard.o:keyboard.c
 	gcc $(FLAGS) $(MACRO) -c keyboard.c -o keyboard.o
+disk.o:disk.c
+	gcc $(FLAGS) $(MACRO) -c disk.c -o disk.o
 
 kernel.elf:$(OBJ)
 	ld -b elf64-x86-64 -z muldefs -o kernel.elf $(OBJ) -T Kernel.lds

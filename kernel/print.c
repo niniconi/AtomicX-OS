@@ -5,7 +5,7 @@
 
 struct position pos;
 
-char buf[4096];
+char print_buf[4096];
 
 extern int inline todigital(const char **s){
     int ret = 0;
@@ -94,7 +94,7 @@ int number(char ** buf,unsigned long number,unsigned long flags,unsigned int R,i
         *buf += data_precision;
         data_width -= data_precision;
     }
-    return 0;
+    return data_width;
 }
 
 int vsprintf(char *buf,const char * format,va_list ap){
@@ -184,14 +184,13 @@ void roll(unsigned long flags,unsigned int lines){
 
 void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,...){
     va_list ap;
-    char *buf = (char *)buf;
+    char *buf = (char *)print_buf;
     int i;
 
     va_start(ap, format);
     vsprintf(buf,format,ap);
     va_end(ap);
 
-    buf = (char *)buf;
     for(;*buf != '\0';buf++){
         switch (*buf) {
             case '\n':
@@ -276,4 +275,14 @@ void printchar(int x,int y,char c,unsigned int bkcolor,unsigned int bgcolor){
         }
         vstart += pos.width;
     }
+}
+
+void init_ppos(){
+    pos.x=0;
+    pos.y=0;
+    pos.width=1440;
+    pos.height=900;
+    pos.charxs=8;
+    pos.charys=16;
+    pos.vromaddr=(int *)0xffff800002200000;
 }

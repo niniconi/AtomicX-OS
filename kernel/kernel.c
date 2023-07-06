@@ -3,17 +3,13 @@
 #include "lib.h"
 #include "trap.h"
 #include "interrupt.h"
+#include "disk.h"
 
 extern array_queue keyboard_buf;
 
 void kernel(){
-    pos.x=0;
-    pos.y=0;
-    pos.width=1440;
-    pos.height=900;
-    pos.charxs=8;
-    pos.charys=16;
-    pos.vromaddr=(int *)0xffff800002200000;
+    init_ppos();
+    debug("build time(%s)\n",__TIME__);
 
     char cpuid_buf[16] = {0};
     unsigned int *a,*b,*c,*d;
@@ -45,7 +41,6 @@ void kernel(){
 
     info("init interrupt\n");
     init_interrupt();
-    debug("build time(%s)\n",__TIME__);
 
 
     register_intr_handle(0x21, keyboard_handle,init_keybord, NULL, 0);

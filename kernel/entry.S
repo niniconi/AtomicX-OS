@@ -156,6 +156,7 @@ ENTRY(VM_exception)
     jmp SAVEL_ALL
 
 SAVEL_ALL:
+    cli
     pushq %r15
     pushq %r14
     pushq %r13
@@ -196,4 +197,5 @@ RESTORE_ALL:
     popq %r13
     popq %r14
     popq %r15
+    sti
     iretq

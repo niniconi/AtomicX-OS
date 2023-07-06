@@ -147,8 +147,8 @@ void analysis_keycode(){
     unsigned char key = queue_get(&keyboard_buf);
     if(key == 0x00)return;
     if(key == PRIFIX_CODE){
-        unsigned char code = queue_get(&keyboard_buf);
-        switch (code & BREAK_MASIK) {
+        key = queue_get(&keyboard_buf);
+        switch (key & BREAK_MASIK) {
             case 0x5b:info("INPUT L GUI\n");
                       break;
             case 0x1d:info("INPUT R CTRL\n");

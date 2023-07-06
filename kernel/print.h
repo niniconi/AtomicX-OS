@@ -93,5 +93,6 @@ void printchar(int x,int y,char c,unsigned int bkcolor,unsigned int bgcolor);
 void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,...);
 #define print(format,args...) color_print(COL_WHITE,COL_BLACK,format,##args)
 int vsprintf(char *buf,const char * format,va_list ap);
+void init_ppos();
 
 #endif
