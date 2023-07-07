@@ -104,7 +104,7 @@ void init_8259A(){
 
     //set slave/master 8259A
     io_out8(0x21, 0xfd);
-    io_out8(0xa1, 0xff);
+    io_out8(0xa1, 0x3f);
 
     sti();
 }

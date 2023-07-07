@@ -29,6 +29,7 @@ int number(char ** buf,unsigned long number,unsigned long flags,unsigned int R,i
     }
     if(data_precision == 0)
         for(tmp = number;tmp;data_precision++)tmp/=R;
+    if(number == 0)data_precision = 1;
     if(data_width == 0 || data_width < data_precision){
         data_width = data_precision;
         if(flags & NUM_XSIGN)data_width += 2;
@@ -180,6 +181,12 @@ void roll(unsigned long flags,unsigned int lines){
         size = (pos.height/pos.charys - lines)*pos.charys*pos.width*sizeof(int);
     }
     memcpy(source, destination, size);
+
+    if(flags & ROLL_DOWN){
+        destination = pos.vromaddr + (pos.height/pos.charys - lines)*pos.charys*pos.width;
+        size = lines*pos.charys*pos.width*sizeof(int);
+    }
+    memset(destination,0,size);
 }
 
 void color_print(unsigned int bkcolor,unsigned int bgcolor,const char *format,...){

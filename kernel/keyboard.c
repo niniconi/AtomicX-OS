@@ -135,6 +135,7 @@ unsigned char scancode_map[NR_SCANCODE] = {
 };
 
 void init_keybord(){
+    info("init keyboard\n");
 }
 
 void keyboard_handle(unsigned long nr){
@@ -146,28 +147,26 @@ void keyboard_handle(unsigned long nr){
 void analysis_keycode(){
     unsigned char key = queue_get(&keyboard_buf);
     if(key == 0x00)return;
-    if(key == PRIFIX_CODE){
-        key = queue_get(&keyboard_buf);
-        switch (key & BREAK_MASIK) {
-            case 0x5b:info("INPUT L GUI\n");
-                      break;
-            case 0x1d:info("INPUT R CTRL\n");
-                      break;
-            case 0x5c:info("INPUT R GUI");
-                      break;
-            case 0x38:info("INPUT R ALT\n");
-                      break;
-            case 0x5d:info("INPUT APPS\n");
-                      break;
-            case 0x2a:info("INPUT PRNT\n");
-                      break;
-            case 0x37:info("INPUT SCRN\n");
-        }
-        return;
-    }
-    if(key & BREAK_FLAG){//BREAK CODE
-        info("KEY=%#x REPLASE KEY %c\n",key,scancode_map[key & BREAK_MASIK]);
-    }else{//MAKE CODE
-        info("KEY=%#x PRESS KEY %c\n",key,scancode_map[key & BREAK_MASIK]);
+    switch (key & BREAK_MASIK) {
+        case 0x5b:info("INPUT L GUI\n");
+                  break;
+        case 0x1d:info("INPUT R CTRL\n");
+                  break;
+        case 0x5c:info("INPUT R GUI");
+                  break;
+        case 0x38:info("INPUT R ALT\n");
+                  break;
+        case 0x5d:info("INPUT APPS\n");
+                  break;
+        case 0x2a:info("INPUT PRNT\n");
+                  break;
+        case 0x37:info("INPUT SCRN\n");
+                  break;
+        default:
+            if(key & BREAK_FLAG){//BREAK CODE
+                info("KEY=%#04x REPLASE KEY %c\n",key,scancode_map[key & BREAK_MASIK]);
+            }else{//MAKE CODE
+                info("KEY=%#04x PRESS KEY %c\n",key,scancode_map[key & BREAK_MASIK]);
+            }
     }
 }

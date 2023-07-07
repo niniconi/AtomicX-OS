@@ -52,19 +52,19 @@ __asm__(
 
 extern void inline set_intr_gate(unsigned long id,void (*entry)()){
 #ifdef GATE_INFO
-    info("register interrupt addr:%#016x, entry:%#016x\n",&IDT+id,entry);
+    info("register interrupt addr:%#018x, entry:%#018x\n",&IDT+id,entry);
 #endif
     set_gate(&IDT+id, entry, GATE_INT_TYPE,0);
 }
 extern void inline set_trap0_gate(unsigned long id,void (*entry)()){
 #ifdef GATE_INFO
-    info("register (dpl=0) trap addr:%#016x, entry:%#016x\n",&IDT+id,entry);
+    info("register (dpl=0) trap addr:%#018x, entry:%#018x\n",&IDT+id,entry);
 #endif
     set_gate(&IDT+id, entry, GATE_TRAP_TYPE,0);
 }
 extern void inline set_trap3_gate(unsigned long id,void (*entry)()){
 #ifdef GATE_INFO
-    info("register (dpl=3) trap addr:%#016x, entry:%#016x\n",&IDT+id,entry);
+    info("register (dpl=3) trap addr:%#018x, entry:%#018x\n",&IDT+id,entry);
 #endif
     set_gate(&IDT+id, entry, GATE_TRAP_TYPE,3);
 }

@@ -5,6 +5,7 @@
 #define nop() __asm__ __volatile__("nop \n\t":::)
 #define cli() __asm__ __volatile__("cli \n\t":::)
 #define sti() __asm__ __volatile__("sti \n\t":::)
+#define int(nr) __asm__ __volatile__("int %0 \n\t"::"i"(nr):)
 
 extern void inline cpuid(unsigned long fn,unsigned long exfn,unsigned int *areg,unsigned int *breg,unsigned int *creg,unsigned int *dreg){
     __asm__ __volatile__(
@@ -22,23 +23,42 @@ extern void inline memcpy(void * source,void *destination,unsigned long size){
             :"D"(destination),"S"(source),"c"(size)
             :);
 }
+extern void inline memset(void * destination,unsigned char fb,unsigned long size){
+    __asm__ __volatile__(
+            "_memsest: \n\t"
+            "movb %%al,(%%edi) \n\t"
+            "inc %%edi \n\t"
+            "loop _memsest \n\t"
+            :
+            :"D"(destination),"a"(fb),"c"(size)
+            :);
+}
 
-extern void inline io_out8(int port,char data){
+extern void inline io_out8(unsigned int port,unsigned char data){
     __asm__ __volatile__(
             "outb %%al,%%edx \n\t"
             :
             :"a"(data),"d"(port)
             :);
 }
-extern void inline io_out32(int port,int data){
+
+extern void inline io_out16(unsigned int port,unsigned short data){
+    __asm__ __volatile__(
+            "out %%ax,%%edx \n\t"
+            :
+            :"a"(data),"d"(port)
+            :);
+}
+
+extern void inline io_out32(unsigned int port,unsigned int data){
     __asm__ __volatile__(
             "outl %%eax,%%edx\n\t"
             :
             :"a"(data),"d"(port)
             :);
 }
-extern char inline io_in8(int port){
-    register char ret;
+extern unsigned char inline io_in8(unsigned int port){
+    register unsigned char ret;
     __asm__ __volatile__(
             "inb %%edx,%0 \n\t"
             :"=r"(ret)
@@ -46,8 +66,17 @@ extern char inline io_in8(int port){
             :);
     return ret;
 }
-extern int inline io_in32(int port){
-    register int ret;
+extern unsigned short inline io_in16(unsigned int port){
+    register unsigned short ret;
+    __asm__ __volatile__(
+            "in %%edx,%0 \n\t"
+            :"=r"(ret)
+            :"d"(port)
+            :);
+    return ret;
+}
+extern unsigned int inline io_in32(unsigned int port){
+    register unsigned int ret;
     __asm__ __volatile__(
             "inl %%edx,%0 \n\t"
             :"=r"(ret)
