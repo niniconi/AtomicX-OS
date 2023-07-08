@@ -19,7 +19,7 @@ interrupt.o:interrupt.c
 trap.o:trap.c
 	gcc $(FLAGS) $(MACRO) -c trap.c -o trap.o
 keyboard.o:keyboard.c
-	gcc $(FLAGS) $(MACRO) -c keyboard.c -o keyboard.o
+	gcc $(FLAGS) $(MACRO) -DSCANCODE_VERSION=1 -c keyboard.c -o keyboard.o
 disk.o:disk.c
 	gcc $(FLAGS) $(MACRO) -c disk.c -o disk.o
 

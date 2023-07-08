@@ -11,7 +11,7 @@ extern void inline cpuid(unsigned long fn,unsigned long exfn,unsigned int *areg,
     __asm__ __volatile__(
             "cpuid \n\t"
             :"=a"(*areg),"=b"(*breg),"=c"(creg),"=d"(dreg)
-            :"a"(fn),"c"(fn)
+            :"a"(fn),"c"(exfn)
             :);
 }
 

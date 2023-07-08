@@ -2,7 +2,14 @@
 #include "print.h"
 #include "lib.h"
 
+#ifndef SCANCODE_VERSION
+#error "Please define SCANCODE_VERSION,range is [1,2,3]"
+#endif
+
 array_queue keyboard_buf = INIT_ARRAY_QUEUE(128);
+
+struct keyboard_stat kb_stat = INIT_KB_STAT();
+
 unsigned char scancode_map[NR_SCANCODE] = {
 /* 0000 */ 0x00,
 /* 0x01 */ 0x00,
@@ -59,7 +66,7 @@ unsigned char scancode_map[NR_SCANCODE] = {
 /* 0x34 */ '.',
 /* 0x35 */ '/',
 /* 0x36 */ 0x00,
-/* 0x37 */ 0x00,
+/* 0x37 */ '*',
 /* 0x38 */ 0x00,
 /* 0x39 */ 0x00,
 /* 0x3a */ 0x00,
@@ -78,11 +85,11 @@ unsigned char scancode_map[NR_SCANCODE] = {
 /* 0x47 */ 0x00,
 /* 0x48 */ 0x00,
 /* 0x49 */ 0x00,
-/* 0x4a */ 0x00,
+/* 0x4a */ '-',
 /* 0x4b */ 0x00,
 /* 0x4c */ 0x00,
 /* 0x4d */ 0x00,
-/* 0x4e */ 0x00,
+/* 0x4e */ '+',
 /* 0x4f */ 0x00,
 /* 0x50 */ 0x00,
 /* 0x51 */ 0x00,
@@ -135,6 +142,7 @@ unsigned char scancode_map[NR_SCANCODE] = {
 };
 
 void init_keybord(){
+    kb_stat.scancode = SCANCODE_VERSION;
     info("init keyboard\n");
 }
 
@@ -144,29 +152,146 @@ void keyboard_handle(unsigned long nr){
     io_out8(0x20, 0x20);
 }
 
-void analysis_keycode(){
+void kb_analysis_keycode(){
+#if SCANCODE_VERSION == 0x01
     unsigned char key = queue_get(&keyboard_buf);
     if(key == 0x00)return;
-    switch (key & BREAK_MASIK) {
-        case 0x5b:info("INPUT L GUI\n");
+
+    unsigned char scancode = scancode_map[key & BREAK_MASK];
+
+    if(key == PRIFIX_CODE){
+        kb_wait();
+        key = queue_get(&keyboard_buf);
+        switch(key & BREAK_MASK){
+            case 0x5b:
+                  info("INPUT L GUI\n");
                   break;
-        case 0x1d:info("INPUT R CTRL\n");
+            case 0x1d:
+                  info("INPUT R CTRL\n");
                   break;
-        case 0x5c:info("INPUT R GUI");
+            case 0x5c:
+                  info("INPUT R GUI\n");
                   break;
-        case 0x38:info("INPUT R ALT\n");
+            case 0x38:
+                  info("INPUT R ALT\n");
                   break;
-        case 0x5d:info("INPUT APPS\n");
+            case 0x5d:
+                  info("INPUT APPS\n");
                   break;
-        case 0x2a:info("INPUT PRNT\n");
+            case 0x2a:
+                  info("INPUT PRNT\n");
                   break;
-        case 0x37:info("INPUT SCRN\n");
+            case 0x37:
+                  info("INPUT SCRN\n");
                   break;
-        default:
-            if(key & BREAK_FLAG){//BREAK CODE
-                info("KEY=%#04x REPLASE KEY %c\n",key,scancode_map[key & BREAK_MASIK]);
-            }else{//MAKE CODE
-                info("KEY=%#04x PRESS KEY %c\n",key,scancode_map[key & BREAK_MASIK]);
-            }
+            case 0x52:
+                  info("INPUT INSERT\n");
+                  break;
+            case 0x47:
+                  info("INPUT HOME\n");
+                  break;
+            case 0x49:
+                  info("INPUT PG UP\n");
+                  break;
+            case 0x53:
+                  info("INPUT DELETE\n");
+                  break;
+            case 0x4f:
+                  info("INPUT END\n");
+                  break;
+            case 0x51:
+                  info("INPUT PG DN\n");
+                  break;
+            case 0x48:
+                  info("INPUT U ARROW\n");
+                  break;
+            case 0x4b:
+                  info("INPUT L ARROW\n");
+                  break;
+            case 0x50:
+                  info("INPUT D ARROW\n");
+                  break;
+            case 0x4d:
+                  info("INPUT A ARROW\n");
+                  break;
+        }
+    }else if(key == 0xe1){
+        kb_wait();
+        key = queue_get(&keyboard_buf);
+        if(key & BREAK_MASK != 0x1d)return;
+        kb_wait();
+        key = queue_get(&keyboard_buf);
+        if(key & BREAK_MASK == 0x45)
+            info("INPUT PAUSE\n");
+    }else{
+        switch (key & BREAK_MASK) {
+            case 0x2a:
+                info("INPUT L SHIFT\n");
+                if(key & BREAK_FLAG) LOCK_CAPS_UPDATE();
+                else LOCK_CAPS_UPDATE();
+                break;
+            case 0x36:
+                info("INPUT R SHIFT\n");
+                if(key & BREAK_FLAG) LOCK_CAPS_UPDATE();
+                else LOCK_CAPS_UPDATE();
+                break;
+            case 0x3a:
+                info("INPUT CAPS LOCK\n");
+                if(key & BREAK_FLAG)LOCK_CAPS_UPDATE();
+                break;
+            case 0x45:
+                info("INPUT NUM LOCK\n");
+                if(key & BREAK_FLAG)LOCK_NUM_UPDATE();
+                break;
+            case 0x3b:
+                info("INPUT F1\n");
+                break;
+            case 0x3c:
+                info("INPUT F2\n");
+                break;
+            case 0x3d:
+                info("INPUT F3\n");
+                break;
+            case 0x3e:
+                info("INPUT F4\n");
+                break;
+            case 0x3f:
+                info("INPUT F5\n");
+                break;
+            case 0x40:
+                info("INPUT F6\n");
+                break;
+            case 0x41:
+                info("INPUT F7\n");
+                break;
+            case 0x42:
+                info("INPUT F8\n");
+                break;
+            case 0x43:
+                info("INPUT F9\n");
+                break;
+            case 0x44:
+                info("INPUT F10\n");
+                break;
+            case 0x57:
+                info("INPUT F11\n");
+                break;
+            case 0x58:
+                info("INPUT F12\n");
+                break;
+            default:
+                if(key & BREAK_FLAG){//BREAK CODE
+                    info("KEY=%#04x REPLASE KEY %c\n",key,scancode);
+                }else{//MAKE CODE
+                    info("KEY=%#04x PRESS KEY %c\n",key,scancode);
+                }
+        }
     }
+#elif SCANCODE_VERSION == 0x02
+#error "This SCANCODE_VERSION is not supported"
+#elif SCANCODE_VERSION == 0x03
+#error "This SCANCODE_VERSION is not supported"
+#else
+#error "SCANCODE_VERSION range is [1,2,3]"
+#endif
 }

@@ -46,5 +46,5 @@ void kernel(){
     register_intr_handle(0x21, keyboard_handle,init_keybord, NULL, 0);
     register_intr_handle(0x2f, disk_handle,init_disk,NULL,0);
 
-    while (1)analysis_keycode();
+    while (1)kb_analysis_keycode();
 }
