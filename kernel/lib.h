@@ -18,19 +18,23 @@ extern void inline cpuid(unsigned long fn,unsigned long exfn,unsigned int *areg,
 extern void inline memcpy(void * source,void *destination,unsigned long size){
     __asm__ __volatile__(
             "cld \n\t"
-            "rep movsb\n\t"
+            "rep movsq \n\t"
+            "movq %%rax,%%rcx \n\t"
+            "rep movsb \n\t"
             :
-            :"D"(destination),"S"(source),"c"(size)
+            :"D"(destination),"S"(source),"c"(size/8),"a"(size % 8)
             :);
 }
 extern void inline memset(void * destination,unsigned char fb,unsigned long size){
+    register unsigned long fq = fb;
+    fq = fq | fq << 8 | fq << 16 | fq << 32;
     __asm__ __volatile__(
-            "_memsest: \n\t"
-            "movb %%al,(%%edi) \n\t"
-            "inc %%edi \n\t"
-            "loop _memsest \n\t"
+            "cld \n\t"
+            "rep stosq \n\t"
+            "movq %%rbx,%%rcx \n\t"
+            "rep stosb \n\t"
             :
-            :"D"(destination),"a"(fb),"c"(size)
+            :"D"(destination),"a"(fq),"c"(size/8),"b"(size % 8)
             :);
 }
 
@@ -102,7 +106,19 @@ typedef struct regs{
     unsigned long r13;
     unsigned long r14;
     unsigned long r15;
-}regs;
+}regs_t;
+
+struct regsf{
+    regs_t regs;
+    unsigned long func; //reserved
+    unsigned long errorcode;
+    unsigned long rip;
+    unsigned long cs;
+    unsigned long rflags;
+    unsigned long rsp;
+    unsigned long ss;
+}__attribute__((packed));
+typedef struct regsf regsf_t;
 
 #define INIT_ARRAY_QUEUE(len) { \
     .length = len, \
@@ -117,6 +133,13 @@ typedef struct array_queue{
     int length;
     char data[128];
 }array_queue;
+
+#define def_forbid_intr_function(function) \
+    __asm__(#function": \n\t" \
+            "cli \n\t" \
+            "call __"#function" \n\t" \
+            "sti \n\t" \
+            "ret \n\t")
 
 extern char inline queue_get(array_queue * queue){
     if(queue->amount == 0) return 0;

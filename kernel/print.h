@@ -37,7 +37,7 @@
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
     }while(0)
 #else
-#define error(msg,args...) do{}while(0)
+#define error(msg,args...)
 #endif
 
 #ifdef LOG_INFO
@@ -47,7 +47,7 @@
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
     }while(0)
 #else
-#define info(msg,args...) do{}while(0)
+#define info(msg,args...)
 #endif
 
 #ifdef LOG_WARRING
@@ -57,7 +57,7 @@
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
     }while(0)
 #else
-#define warring(msg,args...) do{}while(0)
+#define warring(msg,args...)
 #endif
 
 #ifdef LOG_INTERRUPT
@@ -67,7 +67,7 @@
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
     }while(0)
 #else
-#define interrupt(msg,args...) do{}while(0)
+#define interrupt(msg,args...)
 #endif
 
 #ifdef LOG_DEBUG
@@ -77,7 +77,7 @@
         color_print(COL_WHITE,COL_BLACK,msg,##args);\
     }while(0)
 #else
-#define debug(msg,args...) do{}while(0)
+#define debug(msg,args...)
 #endif
 
 

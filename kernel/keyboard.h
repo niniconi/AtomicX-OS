@@ -1,6 +1,8 @@
 #ifndef __KEYBOARD_H
 #define __KEYBOARD_H
 
+#include "lib.h"
+
 #define KB_DATA_PORT 0x60
 #define KB_CTRL_PORT 0x64
 
@@ -49,5 +51,7 @@ struct keyboard_stat{
 void keyboard_handle(unsigned long nr);
 void init_keybord();
 void kb_analysis_keycode();
+
+def_forbid_intr_function(kb_analysis_keycode);
 
 #endif

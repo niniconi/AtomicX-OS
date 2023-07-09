@@ -10,7 +10,6 @@ struct intr_handle{
 };
 
 #define SAVEL_ALL \
-    "cli \n\t" \
     "pushq %r15 \n\t" \
     "pushq %r14 \n\t" \
     "pushq %r13 \n\t" \
@@ -51,7 +50,6 @@ struct intr_handle{
     "popq %r13 \n\t" \
     "popq %r14 \n\t" \
     "popq %r15 \n\t" \
-    "sti \n\t" \
     "iretq \n\t"
 
 #define init_interrupt() \

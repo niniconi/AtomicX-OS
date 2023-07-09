@@ -5,7 +5,7 @@
 */
 SS = 0xb8
 RSP = 0xb0
-EFLAGS = 0xa8
+RFLAGS = 0xa8
 CS = 0xa0
 RIP = 0x98
 ERRCODE = 0x90
@@ -30,50 +30,56 @@ DS = 0x00
 REGS = 0x00
 
 ENTRY(div_error)
+    pushq $0x00
     call SAVEL_ALL
-    movq ERRCODE(%rsp),%rsi
     movq %rsp,%rdi//get regs
     leaq do_div_error(%rip),%rax
     call *%rax
     jmp RESTORE_ALL
 ENTRY(debug_exception)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_debug_exception(%rip),%rax
     call *%rax
     jmp RESTORE_ALL
 ENTRY(nmi)
+    pushq $0x00
     call SAVEL_ALL
-    movq ERRCODE(%rsp),%rsi
     movq %rsp,%rdi//get regs
     leaq do_nmi(%rip),%rax
     call *%rax
     jmp RESTORE_ALL
 ENTRY(breakpoint)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_breakpoint(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(overflow)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_overflow(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(out_bounds)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_out_bounds(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(undefine)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_undefine(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(device_exception)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_device_exception(%rip),%rax
@@ -86,6 +92,7 @@ ENTRY(double_error)
     call *%rax
     jmp SAVEL_ALL
 ENTRY(coprocessor_error)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_coprocessor_error(%rip),%rax
@@ -111,20 +118,18 @@ ENTRY(SS_segment_error)
     jmp SAVEL_ALL
 ENTRY(general_protect)
     call SAVEL_ALL
-    movq ERRCODE(%rsp),%rsi
     movq %rsp,%rdi//get regs
     leaq do_general_protect(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(page_fault)
     call SAVEL_ALL
-    movq ERRCODE(%rsp),%rsi
     movq %rsp,%rdi//get regs
-    movq RIP(%rsp),%rdx
     leaq do_page_fault(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(x87_FPU)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_x87_FPU(%rip),%rax
@@ -137,18 +142,21 @@ ENTRY(alignment_check)
     call *%rax
     jmp SAVEL_ALL
 ENTRY(mechine_check)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_mechine_check(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(SIMD_float_exception)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_SIMD_float_exception(%rip),%rax
     call *%rax
     jmp SAVEL_ALL
 ENTRY(VM_exception)
+    pushq $0x00
     call SAVEL_ALL
     movq %rsp,%rdi//get regs
     leaq do_VM_exception(%rip),%rax
@@ -156,7 +164,6 @@ ENTRY(VM_exception)
     jmp SAVEL_ALL
 
 SAVEL_ALL:
-    cli
     pushq %r15
     pushq %r14
     pushq %r13
@@ -197,5 +204,4 @@ RESTORE_ALL:
     popq %r13
     popq %r14
     popq %r15
-    sti
     iretq

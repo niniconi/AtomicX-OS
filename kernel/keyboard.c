@@ -152,7 +152,7 @@ void keyboard_handle(unsigned long nr){
     io_out8(0x20, 0x20);
 }
 
-void kb_analysis_keycode(){
+void __kb_analysis_keycode(){
 #if SCANCODE_VERSION == 0x01
     unsigned char key = queue_get(&keyboard_buf);
     if(key == 0x00)return;
@@ -218,10 +218,10 @@ void kb_analysis_keycode(){
     }else if(key == 0xe1){
         kb_wait();
         key = queue_get(&keyboard_buf);
-        if(key & BREAK_MASK != 0x1d)return;
+        if((key & BREAK_MASK) != 0x1d)return;
         kb_wait();
         key = queue_get(&keyboard_buf);
-        if(key & BREAK_MASK == 0x45)
+        if((key & BREAK_MASK) == 0x45)
             info("INPUT PAUSE\n");
     }else{
         switch (key & BREAK_MASK) {
