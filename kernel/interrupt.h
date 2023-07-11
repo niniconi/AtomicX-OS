@@ -1,5 +1,6 @@
 #ifndef __INTERRUPT_H
 #define __INTERRUPT_H
+#include "print.h"
 
 struct intr_handle{
     unsigned long nr;
@@ -53,7 +54,10 @@ struct intr_handle{
     "iretq \n\t"
 
 #define init_interrupt() \
-    init_8259A();
+    do { \
+        init_8259A(); \
+        info("init interrupt\n"); \
+    }while(0)
 
 #define STR_LABEL(LABEL) #LABEL
 #define IRQ_NAME(IRQ) IRQ_handle##IRQ

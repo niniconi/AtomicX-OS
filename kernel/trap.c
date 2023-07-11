@@ -125,4 +125,5 @@ void init_trap(){
     set_trap0_gate(18,mechine_check);
     set_trap0_gate(19,SIMD_float_exception);
     set_trap0_gate(20,VM_exception);
+    info("init trap\n");
 }

@@ -7,6 +7,8 @@
 #define sti() __asm__ __volatile__("sti \n\t":::)
 #define int(nr) __asm__ __volatile__("int %0 \n\t"::"i"(nr):)
 
+#define get_CR3(var) __asm__ __volatile__("movq %%cr3,%%rax \n\t":"=a"(var)::)
+
 extern void inline cpuid(unsigned long fn,unsigned long exfn,unsigned int *areg,unsigned int *breg,unsigned int *creg,unsigned int *dreg){
     __asm__ __volatile__(
             "cpuid \n\t"

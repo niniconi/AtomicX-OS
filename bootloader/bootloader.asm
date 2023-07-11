@@ -16,6 +16,7 @@ kernelBuf equ 0x7e00
 kernelBufLen equ 2
 
 e820MemoryStruct equ 0x7e00
+vbeInfoBlock equ 0x8000
 
 [BITS 16]
 
@@ -151,15 +152,19 @@ load:
     call info
 
 getMemoryStruct:
-    mov ax,0x00
-    mov es,ax
-    mov di,e820MemoryStruct
-    mov eax,0x0000e820
-    mov edx,0x534d4150
     mov ebx,0x00000000
-    mov ecx,20
-    int 0x15
-    jc failed
+    mov di,e820MemoryStruct
+    getMemoryStructLoop:
+        mov ax,0x00
+        mov es,ax
+        mov eax,0x0000e820
+        mov edx,0x534d4150
+        mov ecx,20
+        int 0x15
+        jc failed
+        add di,20
+        cmp ebx,0x00000000
+        jne getMemoryStructLoop
     jmp success
     failed:
         cmp ah,0x80
@@ -180,6 +185,20 @@ getMemoryStruct:
         mov cx,E820Success_len
         mov bp,E820Success
         call info
+
+getVBEInfo:
+    mov ax,0x00
+    mov es,ax
+    mov di,vbeInfoBlock
+    mov ax,0x4f00
+    int 0x10
+
+    cmp ax,0x004f
+    jz setVESA
+    mov cx,GetVBEInfoBlockFailed_len
+    mov bp,GetVBEInfoBlockFailed
+    call error
+    jmp $
 
 setVESA:
     mov ax,0x4f02
@@ -278,6 +297,8 @@ intoLongMode:
 message:
     NoKernel db "[error]:not found kernel.bin"
     NoKernel_len equ $-NoKernel
+    GetVBEInfoBlockFailed db "[error]:get VBEInfoBlock Failed"
+    GetVBEInfoBlockFailed_len equ $-GetVBEInfoBlockFailed
     SetVESAModeFailed db "[error]:set SVGA mode(VESA VBE) failed"
     SetVESAModeFailed_len equ $-SetVESAModeFailed
     E820FailedInvalid db "[error]:get E820 struct failed(invalid command)"

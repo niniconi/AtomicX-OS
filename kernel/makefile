@@ -1,4 +1,4 @@
-OBJ=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o disk.o
+OBJ=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o disk.o memory.o
 BIN=kernel.bin
 DIR=../master
 FLAGS:=-mcmodel=large -fno-builtin -fno-pic -m64
@@ -22,6 +22,8 @@ keyboard.o:keyboard.c
 	gcc $(FLAGS) $(MACRO) -DSCANCODE_VERSION=1 -c keyboard.c -o keyboard.o
 disk.o:disk.c
 	gcc $(FLAGS) $(MACRO) -c disk.c -o disk.o
+memory.o:memory.c
+	gcc $(FLAGS) $(MACRO) -c memory.c -o memory.o
 
 kernel.elf:$(OBJ)
 	ld -b elf64-x86-64 -z muldefs -o kernel.elf $(OBJ) -T Kernel.lds

@@ -4,6 +4,7 @@
 #include "trap.h"
 #include "interrupt.h"
 #include "disk.h"
+#include "memory.h"
 
 extern array_queue keyboard_buf;
 
@@ -37,11 +38,10 @@ void kernel(){
     color_print(COL_WHITE, COL_BLACK, "%s\n", cpuid_buf);
 
     init_trap();
-    info("init trap\n");
 
     init_interrupt();
-    info("init interrupt\n");
 
+    init_memory_management_unit();
 
     register_intr_handle(0x21, keyboard_handle,init_keybord, NULL, 0);
     register_intr_handle(0x2f, disk_handle,init_disk,NULL,0);
