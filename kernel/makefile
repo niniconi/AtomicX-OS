@@ -1,4 +1,4 @@
-OBJ=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o disk.o memory.o
+OBJ=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o disk.o memory.o slab.o
 BIN=kernel.bin
 DIR=../master
 FLAGS:=-mcmodel=large -fno-builtin -fno-pic -m64
@@ -24,6 +24,8 @@ disk.o:disk.c
 	gcc $(FLAGS) $(MACRO) -c disk.c -o disk.o
 memory.o:memory.c
 	gcc $(FLAGS) $(MACRO) -c memory.c -o memory.o
+slab.o:slab.c
+	gcc $(FLAGS) $(MACRO) -c slab.c -o slab.o
 
 kernel.elf:$(OBJ)
 	ld -b elf64-x86-64 -z muldefs -o kernel.elf $(OBJ) -T Kernel.lds

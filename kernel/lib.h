@@ -159,4 +159,47 @@ extern void inline queue_put(array_queue * queue,char data){
     queue->amount++;
 }
 
+#define list_add_to_end(node,content) \
+    do{ \
+        typeof(*node) *current_node = node; \
+        while(current_node->next != NULL){ \
+            current_node=current_node->next; \
+        } \
+        current_node->next=content; \
+    }while(0)
+
+#define list_add_to_start(node,content) \
+    do { \
+        typeof(*node) *current_node = node; \
+        while(current_node->last != NULL){ \
+            current_node=current_node->last; \
+        } \
+        current_node->last=content; \
+    }while(0)
+
+#define list_del_from_end(node) \
+    do { \
+        typeof(*node) *current_node = node; \
+        while(current_node->next != NULL){ \
+            current_node = current_node->next; \
+        } \
+        if(current_node->last != NULL){ \
+            node->last->next = NULL; \
+        } \
+    }while(0)
+
+#define list_del(root,node) \
+    do { \
+        typeof(*node) *current_node = root; \
+        while(current_node->next != NULL) { \
+            if(current_node == node){ \
+                if(current_node->last != NULL) { \
+                    current_node->last->next = current_node->next; \
+                } \
+                break; \
+            } \
+            current_node = current_node->next; \
+        } \
+    }while(0);
+
 #endif
