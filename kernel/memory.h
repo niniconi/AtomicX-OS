@@ -4,30 +4,41 @@
 #define PhyToVirtAddr(PhyAddr) (void *)(0xffff800000000000UL + (PhyAddr))
 #define VirtToPhyAddr(VirtAddr) (void *)((VirtAddr) - 0xffff800000000000UL)
 
-#define PAGE4K_SIZE (2 << 12)
-#define PAGE1M_SIZE (2 << 20)
-#define PAGE1G_SIZE (2 << 30)
+#define PAGE4K_SIZE (1 << 12)
+#define PAGE1M_SIZE (1 << 20)
+#define PAGE1G_SIZE (1 << 30)
 
 #define PAGE4K_MASK ~((2*PAGE4K_SIZE) - 1)
 #define PAGE1M_MASK ~((2*PAGE1M_SIZE) - 1)
 #define PAGE1G_MASK ~((2*PAGE1G_SIZE) - 1)
 
-#define PAGE4K_ALIGN(addr) ((addr) & PAGE4K_MASK)
-#define PAGE1M_ALIGN(addr) ((addr) & PAGE1M_MASK)
-#define PAGE1G_ALIGN(addr) ((addr) & PAGE1G_MASK)
+#define PAGE4K_ALIGN(addr) ((addr) & PAGE4K_MASK + ((addr) % PAGE4K_SIZE ? PAGE4K_SIZE:0))
+#define PAGE1M_ALIGN(addr) ((addr) & PAGE1M_MASK + ((addr) % PAGE1M_SIZE ? PAGE1M_SIZE:0))
+#define PAGE1G_ALIGN(addr) ((addr) & PAGE1G_MASK + ((addr) % PAGE1G_SIZE ? PAGE1G_SIZE:0))
 
-#define APAGE_DIRECT 0x01
+#define APAGE_DIRECT 0x01UL
 
-#define PAGE_KERNEL 0x01
-#define PAGE_RD 0x02
-#define PAGE_WR 0x04
-#define PAGE_EXEC 0x08
+#define PAGE_KERNEL 0x01UL
+#define PAGE_RD 0x02UL
+#define PAGE_WR 0x04UL
+#define PAGE_EXEC 0x08UL
+#define PAGE_FREED 0x10UL
+
+#ifndef DEFAULT_PAGE_SIZE
+#define DEFAULT_PAGE_SIZE PAGE4K_SIZE
+#endif
+
+#define KERNEL_REVD_PAGE_CNT 20
 
 int init_memory_management_unit();
+struct page * alloc_pages(int cnt, unsigned long flags);
+int free_pages(int cnt, struct page * dpage);
 
 struct zone{
     unsigned long phy_addr;
     unsigned long length;
+
+    unsigned long used;
     struct zone *next;
 };
 
@@ -57,7 +68,7 @@ struct memory_management{
 
     unsigned long page_count;
     unsigned long used_phy;
-    unsigned long phy_length;
+    unsigned long phy_size;
 
     struct zone *zone;
     struct page *page;

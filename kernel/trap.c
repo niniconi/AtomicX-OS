@@ -28,7 +28,7 @@ void do_out_bounds(regsf_t * regs){
     while(1);
 }
 void do_undefine(regsf_t * regs){
-    error("undefine_mechine_opread(6)\n");
+    error("undefine_mechine_opread(6)  RIP=%#018x\n",regs->rip);
     while(1);
 }
 void do_device_exception(regsf_t * regs){

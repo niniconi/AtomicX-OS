@@ -202,4 +202,7 @@ extern void inline queue_put(array_queue * queue,char data){
         } \
     }while(0);
 
+#define list_to_end(node) while(node->next != NULL) node = node->next;
+
+
 #endif
