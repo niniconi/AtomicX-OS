@@ -21,14 +21,14 @@ __asm__(
     do { \
         register unsigned long rip = 0; \
         __asm__ __volatile__("call get_rip\n\t":"=a"(rip)::); \
-        info("RIP = %#018x\n",rip); \
+        debug("RIP = %#018x\n",rip); \
     }while(0)
 
 #define _debug_wait(c) \
     for(int __i = 0;__i<c;__i++) { nop(); }
 
 #define _debug_print_memory_mangement() \
-    info("page--->%#018x,zone--->%#018x,page_count--->%#010x,used_phy--->%#018x,phy_size--->%#018x\n", \
+    debug("page--->%#018x,zone--->%#018x,page_count--->%#010x,used_phy--->%#018x,phy_size--->%#018x\n", \
             memory_management.page, \
             memory_management.zone, \
             memory_management.page_count, \
@@ -39,7 +39,7 @@ __asm__(
     do { \
         __page = memory_management.page; \
         while(__page != NULL && !(__page->flags & PAGE_FREED)){ \
-            info("page_addr--->%#018x,virt_addr--->%#018x,phy_addr--->%#018x,zone--->%#018x,flags--->%#018x\n", \
+            debug("page_addr--->%#018x,virt_addr--->%#018x,phy_addr--->%#018x,zone--->%#018x,flags--->%#018x\n", \
                     __page, \
                     __page->virt_addr, \
                     __page->phy_addr, \
@@ -54,7 +54,7 @@ __asm__(
     do { \
         __zone = memory_management.zone; \
         while(__zone != NULL){ \
-            info("zone_addr--->%#018x,phy_addr--->%#018x,length--->%#018x,used--->%#018x\n", \
+            debug("zone_addr--->%#018x,phy_addr--->%#018x,length--->%#018x,used--->%#018x\n", \
                     __zone, \
                     __zone->phy_addr, \
                     __zone->length, \
