@@ -38,14 +38,17 @@ __asm__(
 #define _debug_print_page() \
     do { \
         __page = memory_management.page; \
+        int index = 0; \
         while(__page != NULL && !(__page->flags & PAGE_FREED)){ \
-            debug("page_addr--->%#018x,virt_addr--->%#018x,phy_addr--->%#018x,zone--->%#018x,flags--->%#018x\n", \
+            debug("(%#06x)page_addr--->%#018x,virt_addr--->%#018x,phy_addr--->%#018x,zone--->%#018x,flags--->%#018x\n", \
+                    index, \
                     __page, \
                     __page->virt_addr, \
                     __page->phy_addr, \
                     __page->zone, \
                     __page->flags); \
             __page = __page->next; \
+            index++; \
         } \
         __page = NULL; \
     }while(0)
@@ -53,13 +56,16 @@ __asm__(
 #define _debug_print_zone() \
     do { \
         __zone = memory_management.zone; \
+        int index = 0; \
         while(__zone != NULL){ \
-            debug("zone_addr--->%#018x,phy_addr--->%#018x,length--->%#018x,used--->%#018x\n", \
+            debug("(%#06x)zone_addr--->%#018x,phy_addr--->%#018x,length--->%#018x,used--->%#018x\n", \
+                    index, \
                     __zone, \
                     __zone->phy_addr, \
                     __zone->length, \
                     __zone->used); \
             __zone = __zone->next; \
+            index++; \
         } \
         __zone = NULL; \
     }while(0)

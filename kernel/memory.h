@@ -16,7 +16,14 @@
 #define PAGE1M_ALIGN(addr) ((addr) & PAGE1M_MASK + ((addr) % PAGE1M_SIZE ? PAGE1M_SIZE:0))
 #define PAGE1G_ALIGN(addr) ((addr) & PAGE1G_MASK + ((addr) % PAGE1G_SIZE ? PAGE1G_SIZE:0))
 
-#define APAGE_DIRECT 0x01UL
+/*
+ * if set this bit
+ *     phy_addr & (~0xffff800000000000UL) == virt_addr
+ * else
+ *     phy_addr & (~0xffff800000000000UL) != virt_addr
+ */
+#define PAGEA_DIRECT 0x01UL
+#define PAGEA_SHARE 0x02UL
 
 #define PAGE_KERNEL 0x01UL
 #define PAGE_RD 0x02UL
@@ -28,10 +35,13 @@
 #define DEFAULT_PAGE_SIZE PAGE4K_SIZE
 #endif
 
+/*
+ * reserve for memory management unit
+ */
 #define KERNEL_REVD_PAGE_CNT 20
 
 int init_memory_management_unit();
-struct page * alloc_pages(int cnt, unsigned long flags);
+struct page * alloc_pages(unsigned int cnt, unsigned long option, unsigned long flags);
 int free_pages(int cnt, struct page * dpage);
 
 struct zone{

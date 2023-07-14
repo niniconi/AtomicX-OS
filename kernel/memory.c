@@ -5,38 +5,116 @@
 
 struct memory_management memory_management;
 
-struct page * alloc_pages(int cnt, unsigned long flags){
+struct page * alloc_pages(unsigned int cnt, unsigned long option, unsigned long flags){
     struct page * page = (struct page *)memory_management.end;
     struct page * epage = memory_management.page;
     struct page * ret_page = NULL;
-    int i;
+    unsigned long virt_addr_start = memory_management.kstart + memory_management.page_count*DEFAULT_PAGE_SIZE;
+    int i,j;
+
+    if(cnt + memory_management.page_count >= ((KERNEL_REVD_PAGE_CNT*DEFAULT_PAGE_SIZE)/sizeof(struct page))){
+        warring("alloc more page, please free some.");
+    }
 
     flags &= ~PAGE_FREED;
 
+    if(!(option & PAGEA_DIRECT)) virt_addr_start = 0;
+
     while(!(epage->flags & PAGE_FREED) && epage->next != NULL)epage = epage->next;
+
+    if((epage->flags & PAGE_FREED) && (option & PAGEA_DIRECT)){
+        unsigned int continue_page_length = 1;
+        unsigned int continue_page_max_length = 1;
+        struct page * continue_page = epage;
+        struct page * continue_start_page = epage;
+        struct page * continue_next_start_page = epage;
+        struct page * continue_end_page = epage;
+
+        while(continue_page != NULL) {
+            if(continue_page->next != NULL) {
+                if(continue_page->phy_addr + DEFAULT_PAGE_SIZE == continue_page->next->phy_addr) {
+                    continue_page_length++;
+                }else{
+                    if(continue_page_length > continue_page_max_length){
+                        continue_page_max_length=continue_page_length;
+                        continue_start_page = continue_next_start_page;
+                        continue_end_page = continue_page;
+                    }
+                    continue_next_start_page = continue_page->next;
+
+                    continue_page_length = 1;
+                }
+            }
+            continue_page = continue_page->next;
+        }
+
+        if(continue_page_max_length < cnt) goto NOT_FOUND_CONTINUE_PAGE;
+
+        continue_start_page->last->next = continue_end_page->next;
+        if(continue_end_page->next != NULL)continue_end_page->next->last = continue_start_page->last;
+
+        epage->last->next = continue_start_page;
+        continue_start_page->last = epage->last;
+
+        epage->last = continue_end_page;
+        continue_end_page->next = epage;
+
+        continue_page = continue_start_page;
+        for(i=0;i<cnt;i++){
+            continue_page->flags = flags;
+            continue_page->virt_addr = (unsigned long)PhyToVirtAddr(continue_page->phy_addr);
+
+            continue_page = continue_page->next;
+        }
+
+        memory_management.page_count += cnt;
+        memory_management.used_phy += cnt * DEFAULT_PAGE_SIZE;
+        return continue_start_page;
+    }
+
+NOT_FOUND_CONTINUE_PAGE:
 
     if(epage->flags & PAGE_FREED)ret_page = epage;
     else ret_page = page;
 
-    if (epage->flags & PAGE_FREED) {
+    if ((epage->flags & PAGE_FREED) && !(option & PAGEA_DIRECT)) {
         for(i=0;i<cnt;i++){
+            /*
+             * use freed page's reserved phy address
+             */
             epage->flags = flags;
+            epage->virt_addr = virt_addr_start;
+            virt_addr_start += DEFAULT_PAGE_SIZE;
 
             if(epage->next == NULL) break;
             epage = epage->next;
         }
         memory_management.end += (cnt - (i + 1)) * sizeof(struct page);
+
+        i++;
+        j=0;
         for(;i<cnt;i++){
             memset(page,0,sizeof(struct page));
             epage->next = page;
             page->last = epage;
 
             page->flags = flags;
+            page->virt_addr = virt_addr_start;
+            virt_addr_start += DEFAULT_PAGE_SIZE;
+            page->phy_addr = (unsigned long)VirtToPhyAddr((j + memory_management.page_count)*DEFAULT_PAGE_SIZE + memory_management.kstart);
+            j++;
 
             epage = page;
             page++;
         }
-    }else{
+    }else if((epage->flags & PAGE_FREED) && (option & PAGEA_DIRECT)){
+        struct page * sfpage = NULL;
+        struct page * efpage = NULL;
+
+        sfpage = epage;
+        list_to_end(epage);
+        efpage = epage;
+
         memory_management.end += cnt * sizeof(struct page);
         for (i=0;i<cnt;i++) {
             memset(page,0,sizeof(struct page));
@@ -44,6 +122,35 @@ struct page * alloc_pages(int cnt, unsigned long flags){
             page->last = epage;
 
             page->flags = flags;
+            page->virt_addr = virt_addr_start;
+            virt_addr_start += DEFAULT_PAGE_SIZE;
+            page->phy_addr = (unsigned long)VirtToPhyAddr(page->virt_addr);
+
+            epage = page;
+            page++;
+        }
+        sfpage->last->next = efpage->next;
+        efpage->next->last = sfpage->last;
+
+        epage->next = sfpage;
+        sfpage->last = epage;
+
+        efpage->next = NULL;
+    }else{
+        memory_management.end += cnt * sizeof(struct page);
+        for (i=0;i<cnt;i++) {
+            memset(page,0,sizeof(struct page));
+            epage->next = page;
+            page->last = epage;
+
+            /*
+             * if has PAGEA_DIRECT,then phy_addr and virt_addr calculate the same result.
+             * if not has PAGEA_DIRECT,then calculations are not the same.
+             */
+            page->flags = flags;
+            page->virt_addr = virt_addr_start;
+            virt_addr_start += DEFAULT_PAGE_SIZE;
+            page->phy_addr = (unsigned long)VirtToPhyAddr((i + memory_management.page_count)*DEFAULT_PAGE_SIZE + memory_management.kstart);
 
             epage = page;
             page++;
@@ -65,9 +172,10 @@ int free_pages(int cnt, struct page * dpage){
         if(fpage == dpage){
             if(fpage->flags & PAGE_FREED)return 0;
             for(i=0;i<cnt;i++) {
+
+                //keep phy addr
                 dpage->flags = PAGE_FREED;
                 dpage->virt_addr = NULL;
-                dpage->phy_addr = NULL;
                 dpage->zone->used -= DEFAULT_PAGE_SIZE;
                 dpage->zone = NULL;
 
