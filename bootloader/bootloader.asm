@@ -15,8 +15,10 @@ kernel equ 0x100000
 kernelBuf equ 0x7e00
 kernelBufLen equ 2
 
+; Here's hardware info will be send to kernel.
 e820MemoryStruct equ 0x7e00
 vbeInfoBlock equ 0x8000
+vbeModeInfoBlock equ 0x8200
 
 [BITS 16]
 
@@ -194,15 +196,63 @@ getVBEInfo:
     int 0x10
 
     cmp ax,0x004f
-    jz setVESA
+    jz displayVBEInfo
     mov cx,GetVBEInfoBlockFailed_len
     mov bp,GetVBEInfoBlockFailed
     call error
     jmp $
 
+displayVBEInfo:
+    mov ax,0x00
+    mov es,ax
+    mov di,vbeInfoBlock
+
+    ; show VbeSignature
+    mov bp,di
+    mov cx,4
+    call info
+
+    ; mov esi,[vbeInfoBlock+14] ;get the video mode list ptr
+; getVBEModeList:
+    ; mov cx,word [esi]
+
+    ; cmp cx,0xffff
+    ; jz setVESA
+
+    ; add esi,2
+
+    ; mov ax,0x00
+    ; mov es,ax
+    ; mov di,vbeModeInfoBlock ; save to 0x8200
+    ; mov ax,0x4f01
+    ; int 0x10
+
+    ; cmp ax,0x004f
+    ; jz getVBEModeList
+
+    ; mov cx,GetVBEModeListFailed_len
+    ; mov bp,GetVBEModeListFailed
+    ; call error
+    ; jmp $
+
+getSpecifiedVBEModeInfo:
+    mov ax,0x00
+    mov es,ax
+    mov di,vbeModeInfoBlock; save the mode infomation to 0x8200
+    mov ax,0x4f01
+    mov cx,0x180
+    int 0x10
+    cmp ax,0x004f
+    jz setVESA
+
+    mov cx,GetVBEModeListFailed_len
+    mov bp,GetVBEModeListFailed
+    call error
+    jmp $
+
 setVESA:
     mov ax,0x4f02
-    mov bx,0x4180
+    mov bx,0x4180 ;1440x900 bpp 32
     int 0x10
 
     cmp ax,0x004f
@@ -299,6 +349,8 @@ message:
     NoKernel_len equ $-NoKernel
     GetVBEInfoBlockFailed db "[error]:get VBEInfoBlock Failed"
     GetVBEInfoBlockFailed_len equ $-GetVBEInfoBlockFailed
+    GetVBEModeListFailed db "[error]:get Mode list failed"
+    GetVBEModeListFailed_len equ $-GetVBEModeListFailed
     SetVESAModeFailed db "[error]:set SVGA mode(VESA VBE) failed"
     SetVESAModeFailed_len equ $-SetVESAModeFailed
     E820FailedInvalid db "[error]:get E820 struct failed(invalid command)"

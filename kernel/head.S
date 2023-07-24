@@ -45,6 +45,11 @@ entry_64:
     // set the default idt
     call set_default_idt
 
+    // set default tss descriptor and tss sttuct
+    call set_default_tss
+    // movw $0x08*0x09,%ax
+    // ltr %ax
+
     jmp kernel
 
 set_default_idt:
@@ -85,6 +90,46 @@ set_default_idt:
     loop _set_idt
     ret
 
+set_default_tss:
+    movq $0xffff800000007c00,%rax
+    leaq TSS(%rip),%rdi
+
+    movq %rax,4(%rdi)
+    movq %rax,12(%rdi)
+    movq %rax,20(%rdi)
+    movq %rax,36(%rdi)
+    movq %rax,44(%rdi)
+    movq %rax,52(%rdi)
+    movq %rax,60(%rdi)
+    movq %rax,68(%rdi)
+    movq %rax,76(%rdi)
+    movq %rax,84(%rdi)
+    movw $0x00,102(%rdi)
+
+    movq %rdi,%rax
+    movq $5,%rcx
+    leaq GDT(%rip),%rdi
+    addq $9*8,%rdi
+
+    _set_tss:
+        // set segment length [15:00]
+        movw $0xffff,0(%rdi)
+
+        //set segment base [23:00]
+        movw %ax,16(%rdi)
+        shrq $16,%rax
+        movb %al,32(%rdi)
+        shrq $8,%rax
+
+        movw $0x0f89,40(%rdi)
+        movb %al,56(%rdi)
+        shrq $8,%rax
+        movl %eax,64(%rdi)
+
+        addq $16,%rdi
+    loop _set_tss
+    ret
+
 ENTRY(default_interupt)
     movq $0x00ff0000,%rdi
     movq $0x00000000,%rsi
@@ -108,27 +153,35 @@ __PDPT:
     .quad 0x00103003
     .quad 0x00000083//1GB PAGE
     .quad 0x40000083//1GB PAGE
-    .fill 512-3,8,0
+    .quad 0x80000083//1GB PAGE
+    .quad 0xc0000083//1GB PAGE
+    .quad 0x100000083//1GB PAGE
+    .quad 0x140000083//1GB PAGE
+    .quad 0x180000083//1GB PAGE
+    .quad 0x1c0000083//1GB PAGE
+    .quad 0x200000083//1GB PAGE
+    .quad 0x2e0000083//1GB PAGE
+    .fill 512-11,8,0
 .org 0x3000
 __PDT:
     // the default page size
-    .quad 0x0000083//1MB PAGE
-    .quad 0x0200083//1MB PAGE
-    .quad 0x0400083//1MB PAGE
-    .quad 0x0600083//1MB PAGE
-    .quad 0x0800083//1MB PAGE
-    .quad 0x0a00083//1MB PAGE
-    .quad 0x0c00083//1MB PAGE
-    .quad 0x0e00083//1MB PAGE
-    .quad 0x1000083//1MB PAGE
-    .quad 0x1200083//1MB PAGE
-    .quad 0x1400083//1MB PAGE
-    .quad 0x1600083//1MB PAGE
-    .quad 0x1800083//1MB PAGE
-    .quad 0x1a00083//1MB PAGE
-    .quad 0x1c00083//1MB PAGE
-    .quad 0x1e00083//1MB PAGE
-    .quad 0x2000083//1MB PAGE
+    .quad 0x0000083//2MB PAGE
+    .quad 0x0200083//2MB PAGE
+    .quad 0x0400083//2MB PAGE
+    .quad 0x0600083//2MB PAGE
+    .quad 0x0800083//2MB PAGE
+    .quad 0x0a00083//2MB PAGE
+    .quad 0x0c00083//2MB PAGE
+    .quad 0x0e00083//2MB PAGE
+    .quad 0x1000083//2MB PAGE
+    .quad 0x1200083//2MB PAGE
+    .quad 0x1400083//2MB PAGE
+    .quad 0x1600083//2MB PAGE
+    .quad 0x1800083//2MB PAGE
+    .quad 0x1a00083//2MB PAGE
+    .quad 0x1c00083//2MB PAGE
+    .quad 0x1e00083//2MB PAGE
+    .quad 0x2000083//2MB PAGE
 
     .quad 0xe0000083//0x2200000
     .quad 0xe0200083

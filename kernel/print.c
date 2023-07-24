@@ -1,6 +1,8 @@
 #include "font.h"
 #include "print.h"
 #include "lib.h"
+#include "memory.h"
+
 #include <stdarg.h>
 
 struct position pos;
@@ -285,11 +287,13 @@ void printchar(int x,int y,char c,unsigned int bkcolor,unsigned int bgcolor){
 }
 
 void init_ppos(){
+    register unsigned long vbe_mode_info_block_ptr = (unsigned long)PhyToVirtAddr(0x8200);
     pos.x=0;
     pos.y=0;
-    pos.width=1440;
-    pos.height=900;
+    pos.width=*(unsigned short *)(vbe_mode_info_block_ptr + 18);
+    pos.height=*(unsigned short *)(vbe_mode_info_block_ptr + 20);
     pos.charxs=8;
     pos.charys=16;
-    pos.vromaddr=(int *)0xffff800002200000;
+    pos.vromaddr=(int *)((unsigned long)*(unsigned int *)(vbe_mode_info_block_ptr+40) + 0xffff800040000000);
+    /* pos.vromaddr=(int *)0xffff800002200000; */
 }
