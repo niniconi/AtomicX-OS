@@ -1,5 +1,5 @@
-IMG=../master.img
-DIR=../master
+IMG:=../master.img
+DIR:=../master
 
 build:clean mbr.bin bootloader.bin
 

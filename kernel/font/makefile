@@ -1,5 +1,5 @@
-out=mkfont font.h
-kernel=../
+out:=mkfont font.h
+kernel:=../
 
 build:clean font.h
 
