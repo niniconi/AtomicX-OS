@@ -85,7 +85,7 @@ static struct file * fd_to_file(int fd){
     vfs->fd_pool;
 }
 
-int sys_open(const char * path,unsigned long option){
+int sys_open(const char * path,unsigned int oflag){
 
 }
 

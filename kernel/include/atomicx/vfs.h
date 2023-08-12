@@ -98,11 +98,23 @@ struct vfs{
 };
 
 enum open_ops{
-
+    O_EXEC = 0x001,
+    O_RDONLY = 0x002,
+    O_RDWR = 0x004,
+    O_SEARCH = 0x008,
+    O_WRONLY = 0x010,
+    O_APPEND = 0x020,
+    O_CREAT = 0x040,
+    O_DIRECTORY = 0x080,
+    O_EXCL = 0x100,
+    O_NOCTTY = 0x200,
+    O_NOFOLLOW = 0x400,
+    O_NONBLOCK = 0x800,
+    O_TRUNC = 0x1000,
 };
 
 int init_vfs();
-int sys_open(const char * path,unsigned long option);
+int sys_open(const char * path,unsigned int oflag);
 void sys_read(int fd,void * buf,unsigned long size);
 void sys_write(int fd,void * buf,unsigned long size);
 void sys_close(int fd);
