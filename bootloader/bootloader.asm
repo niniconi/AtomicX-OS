@@ -168,6 +168,11 @@ getMemoryStruct:
         cmp ebx,0x00000000
         jne getMemoryStructLoop
     jmp success
+    mov DWORD [di],0x00
+    mov DWORD [di+4],0x00
+    mov DWORD [di+8],0x00
+    mov DWORD [di+12],0x00
+    mov DWORD [di+16],0x00
     failed:
         cmp ah,0x80
         jmp E820NotSupport

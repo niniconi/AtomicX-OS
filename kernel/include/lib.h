@@ -1,18 +1,42 @@
 #ifndef __LIB_H
 #define __LIB_H
 
+#include "lib/bool.h"
+#include "lib/io.h"
+
 #define NULL 0
 #define nop() __asm__ __volatile__("nop \n\t":::)
 #define cli() __asm__ __volatile__("cli \n\t":::)
 #define sti() __asm__ __volatile__("sti \n\t":::)
+#define mfence() __asm__ __volatile__("mfence \n\t":::)
 #define int(nr) __asm__ __volatile__("int %0 \n\t"::"i"(nr):)
 
 #define get_CR3(var) __asm__ __volatile__("movq %%cr3,%%rax \n\t":"=a"(var)::)
 
-extern void inline cpuid(unsigned long fn,unsigned long exfn,unsigned int *areg,unsigned int *breg,unsigned int *creg,unsigned int *dreg){
+#define flush_page_table() \
+    __asm__ __volatile__( \
+            "movq %%cr3,%%rax \n\t" \
+            "movq %%rax,%%cr3 \n\t" \
+            :::)
+
+#define set_page_table(page_addr) \
+    __asm__ __volatile__("movq %%rax,%%cr3 \n\t"::"a"(page_addr):)
+
+extern void inline wrmsr(unsigned int addr,unsigned long data){
+    __asm__ __volatile__("wrmsr \n\t"::"c"(addr),"d"(data >> 32),"a"(data & 0xffffffff):);
+}
+
+extern unsigned long inline rdmsr(unsigned int addr){
+    register unsigned long high;
+    register unsigned long low;
+    __asm__ __volatile__("rdmsr \n\t":"=d"(high),"=a"(low):"c"(addr):);
+    return (high << 32) + (low & 0xffffffff);
+}
+
+extern void inline cpuid(unsigned int fn,unsigned int exfn,unsigned int *areg,unsigned int *breg,unsigned int *creg,unsigned int *dreg){
     __asm__ __volatile__(
             "cpuid \n\t"
-            :"=a"(*areg),"=b"(*breg),"=c"(creg),"=d"(dreg)
+            :"=a"(*areg),"=b"(*breg),"=c"(*creg),"=d"(*dreg)
             :"a"(fn),"c"(exfn)
             :);
 }
@@ -40,54 +64,27 @@ extern void inline memset(void * destination,unsigned char fb,unsigned long size
             :);
 }
 
-extern void inline io_out8(unsigned int port,unsigned char data){
+extern int inline strncmp(const char * lstr,const char *rstr,unsigned long count){
+    register int ret = 0;
     __asm__ __volatile__(
-            "outb %%al,%%edx \n\t"
-            :
-            :"a"(data),"d"(port)
-            :);
-}
-
-extern void inline io_out16(unsigned int port,unsigned short data){
-    __asm__ __volatile__(
-            "out %%ax,%%edx \n\t"
-            :
-            :"a"(data),"d"(port)
-            :);
-}
-
-extern void inline io_out32(unsigned int port,unsigned int data){
-    __asm__ __volatile__(
-            "outl %%eax,%%edx\n\t"
-            :
-            :"a"(data),"d"(port)
-            :);
-}
-extern unsigned char inline io_in8(unsigned int port){
-    register unsigned char ret;
-    __asm__ __volatile__(
-            "inb %%edx,%0 \n\t"
-            :"=r"(ret)
-            :"d"(port)
+            "xorq %%rdx,%%rdx \n\t"
+            "cmpq $0x00,%%rcx \n\t"
+            "jz __strncmp_end \n\t"
+            "__strncmp: \n\t"
+            "xorq %%rax,%%rax \n\t"
+            "xorq %%rbx,%%rbx \n\t"
+            "movb 0x00(%%rsi),%%al \n\t"
+            "movb 0x00(%%rdi),%%bl \n\t"
+            "subq %%rax,%%rbx \n\t"
+            "addq %%rbx,%%rdx \n\t"
+            "addq $0x01,%%rsi \n\t"
+            "addq $0x01,%%rdi \n\t"
+            "loop __strncmp \n\t"
+            "__strncmp_end: \n\t"
+            :"=d"(ret)
+            :"S"(rstr),"D"(lstr),"c"(count)
             :);
     return ret;
-}
-extern unsigned short inline io_in16(unsigned int port){
-    register unsigned short ret;
-    __asm__ __volatile__(
-            "in %%edx,%0 \n\t"
-            :"=r"(ret)
-            :"d"(port)
-            :);
-    return ret;
-}
-extern unsigned int inline io_in32(unsigned int port){
-    register unsigned int ret;
-    __asm__ __volatile__(
-            "inl %%edx,%0 \n\t"
-            :"=r"(ret)
-            :"d"(port)
-            :);
 }
 
 typedef struct regs{
@@ -133,8 +130,14 @@ typedef struct array_queue{
     int head,tail;
     int amount;
     int length;
-    char data[128];
+    unsigned long data[128];
 }array_queue;
+
+struct list{
+    struct list * last;
+    unsigned long data;
+    struct list * next;
+};
 
 #define def_forbid_intr_function(function) \
     __asm__(#function": \n\t" \
@@ -143,7 +146,7 @@ typedef struct array_queue{
             "sti \n\t" \
             "ret \n\t")
 
-extern char inline queue_get(array_queue * queue){
+extern unsigned long inline queue_get(array_queue * queue){
     if(queue->amount == 0) return 0;
     int index = queue->tail;
     if(index >= queue->length - 1)queue->tail=0;
@@ -151,7 +154,7 @@ extern char inline queue_get(array_queue * queue){
     queue->amount--;
     return queue->data[index];
 }
-extern void inline queue_put(array_queue * queue,char data){
+extern void inline queue_put(array_queue * queue,unsigned long data){
     if(queue->amount == queue->length) return;
     if(queue->head >= queue->length - 1)queue->head = 0;
     else queue->head++;
@@ -191,7 +194,7 @@ extern void inline queue_put(array_queue * queue,char data){
 #define list_del(root,node) \
     do { \
         typeof(*node) *current_node = root; \
-        while(current_node->next != NULL) { \
+        while(current_node != NULL) { \
             if(current_node == node){ \
                 if(current_node->last != NULL) { \
                     current_node->last->next = current_node->next; \
@@ -200,7 +203,7 @@ extern void inline queue_put(array_queue * queue,char data){
             } \
             current_node = current_node->next; \
         } \
-    }while(0);
+    }while(0)
 
 #define list_to_end(node) while(node->next != NULL) node = node->next;
 

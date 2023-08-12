@@ -39,6 +39,13 @@
 
 #define disk_wait() while(io_in8(PIO_DISK_PORT_CMD_STAT) & 0x88 != 0x08)
 
+/*
+ * use for block_device_request pack
+ */
+#define HD_CMD_READ 0x01
+#define HD_CMD_WRITE 0x02
+#define HD_CMD_INFO 0x03
+
 void init_disk();
 void disk_handle(unsigned long nr);
 
@@ -46,8 +53,32 @@ void disk_handle(unsigned long nr);
  * return read/write length. if error then retrun value < 0 .
  * unit is byte.
  */
-int disk_read(int device,int cnt,long addr);
-int disk_write(int device);
-void disk_info(int device);
+int disk_read(unsigned int device,unsigned int sec_cnt,unsigned long lba,void * buffer);
+int disk_write(unsigned int device,unsigned long lba,void * buffer,unsigned long size);
+void disk_info(unsigned int device,void *buffer);
 
+
+void make_block_request(unsigned char hd_cmd,unsigned long size,unsigned char * data_buffer);
+
+union hd_info{
+    unsigned char data[512];
+    struct {
+    }__attribute__((packed));
+};
+
+struct disk_driver{
+    void * disk_buf;
+    union hd_info hd_info[2];
+};
+
+struct block_device_request{
+    unsigned char hd_cmd;
+
+    unsigned long size;
+    unsigned char * data_buffer;
+};
+
+struct block_device{
+
+};
 #endif

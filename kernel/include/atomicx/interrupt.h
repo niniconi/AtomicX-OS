@@ -53,12 +53,6 @@ struct intr_handle{
     "popq %r15 \n\t" \
     "iretq \n\t"
 
-#define init_interrupt() \
-    do { \
-        init_8259A(); \
-        info("init interrupt\n"); \
-    }while(0)
-
 #define STR_LABEL(LABEL) #LABEL
 #define IRQ_NAME(IRQ) IRQ_handle##IRQ
 #define IRQ(IRQ) \
@@ -70,7 +64,7 @@ struct intr_handle{
             "call do_IRQ \n\t" \
             RESTORE_ALL )
 
-void init_8259A();
+void init_interrupt();
 void register_intr_handle(unsigned long nr,void (*handle)(unsigned long nr),void (*install)(),void (*uninstall)(),unsigned long flags);
 void unregister_intr_handle(unsigned long nr);
 

@@ -1,6 +1,9 @@
 loop=/dev/loop0
 # loop=/dev/block/loop0
 
+build:
+	cd bootloader && $(MAKE) clean install
+	cd kernel && $(MAKE) clean install
 run:bochsrc master.img
 	bochs -q
 master.img:

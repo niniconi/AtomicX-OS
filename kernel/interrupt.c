@@ -1,7 +1,9 @@
-#include "interrupt.h"
-#include "gate.h"
-#include "lib.h"
-#include "print.h"
+#include <atomicx/interrupt.h>
+#include <atomicx/gate.h>
+#include <atomicx/print.h>
+#include <atomicx/8259a.h>
+#include <atomicx/APIC.h>
+#include <lib.h>
 
 IRQ(0x20);
 IRQ(0x21);
@@ -59,7 +61,11 @@ struct intr_handle handles[0x18];
 
 void do_IRQ(unsigned long nr){
     interrupt("do IRQ%#04x\n",nr);
-    handles[nr-0x20].handle(nr);
+    if(handles[nr-0x20].handle != NULL){
+        handles[nr-0x20].handle(nr);
+    }else{
+        error("this IRQ is not register\n");
+    }
 }
 
 void register_intr_handle(unsigned long nr,void (*handle)(unsigned long nr),void (*install)(),void (*uninstall)(),unsigned long flags){
@@ -84,27 +90,17 @@ void unregister_intr_handle(unsigned long nr){
     if(hdle->uninstall != NULL)hdle->uninstall();
 }
 
-void init_8259A(){
+void init_interrupt(){
     int i;
     for (i=0x20; i<=0x37; i++) {
         set_intr_gate(i, IRQ_handles[i-0x20]);
     }
 
-    //set master 8259A
-    io_out8(0x20, 0x11);
-    io_out8(0x21, 0x20);
-    io_out8(0x21, 0x04);
-    io_out8(0x21, 0x01);
-
-    //set slave 8259A
-    io_out8(0xa0, 0x11);
-    io_out8(0xa1, 0x28);
-    io_out8(0xa1, 0x02);
-    io_out8(0xa1, 0x01);
-
-    //set slave/master 8259A
-    io_out8(0x21, 0xfd);
-    io_out8(0xa1, 0x3f);
-
-    sti();
+    int stat = 0;
+#ifndef APIC
+    init_8259a();
+#else
+    stat = init_APIC();
+    if(stat == INIT_APIC_ERR_NOT_SUPPORT) init_8259a();
+#endif
 }

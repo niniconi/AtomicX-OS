@@ -1,6 +1,6 @@
-#include "keyboard.h"
-#include "print.h"
-#include "lib.h"
+#include <atomicx/keyboard.h>
+#include <atomicx/print.h>
+#include <lib.h>
 
 #ifndef SCANCODE_VERSION
 #error "Please define SCANCODE_VERSION,range is [1,2,3]"

@@ -1,7 +1,9 @@
 IMG=../master.img
 DIR=../master
 
-install:mbr.bin bootloader.bin
+build:clean mbr.bin bootloader.bin
+
+install:build
 	dd if=mbr.bin of=$(IMG) bs=512 count=1 conv=notrunc
 	cp ./boot.bin  $(DIR)/boot.bin
 

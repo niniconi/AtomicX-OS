@@ -1,7 +1,7 @@
-#include "lib.h"
-#include "print.h"
-#include "gate.h"
-#include "trap.h"
+#include <atomicx/print.h>
+#include <atomicx/gate.h>
+#include <atomicx/trap.h>
+#include <lib.h>
 
 void do_div_error(regsf_t * regs){
     error("div(0)  RIP=%#018x\n",regs->rip);
@@ -36,7 +36,7 @@ void do_device_exception(regsf_t * regs){
     while(1);
 }
 void do_double_error(regsf_t * regs){
-    error("double error abort(8)");
+    error("double error abort(8)\n");
     while(1);
 }
 void do_coprocessor_error(regsf_t * regs){

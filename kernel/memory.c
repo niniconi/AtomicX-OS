@@ -1,9 +1,130 @@
-#include "memory.h"
-#include "print.h"
-#include "lib.h"
-#include "slab.h"
+#include <atomicx/memory.h>
+#include <atomicx/print.h>
+#include <atomicx/slab.h>
+#include <lib.h>
+
+/*
+ * virt address struct:
+ *      63         48   47         39  38            30   29            21  20            12   11            0
+ *     |    Sign      |     PML4     |       PDPT       |        PDT      |        PT        |     Offset     |
+ */
 
 struct memory_management memory_management;
+extern struct position pos;
+
+void * init_page_table(void * page_table,struct page * pages,unsigned int count){
+    if((unsigned long)page_table & 0xfffUL){
+        error("unaligned page table address %#018x\n",page_table);
+        return NULL;
+    }
+
+    // TODO change
+    memset(page_table,0,16384);
+
+    // TODO change
+    unsigned int attr = 0x83;
+
+    unsigned long page_table_phy_addr = (unsigned long)VirtToPhyAddr(page_table);
+    struct page *page = NULL;
+    int i;
+
+    unsigned int PDPT_count = 0;
+    unsigned int PDT_count = 0;
+    unsigned int PT_count = 0;
+
+    /*
+     * init page table PML4T
+     */
+    page=pages;
+    for(i=0;i<count;i++){
+        unsigned long PMLE_selector = (page->virt_addr & ADDR_PML4_MASK) >> 39;
+        if(*((unsigned long *)page_table + PMLE_selector) == 0UL){
+            *((unsigned long *)page_table + PMLE_selector) = (page_table_phy_addr + 0x1000 + 0x1000*PDPT_count) | attr;
+            PDPT_count++;
+        }
+        page = pages->next;
+    }
+
+    /*
+     * init page talbe PDPT,PDT,PT
+     */
+    switch(DEFAULT_PAGE_SIZE){
+        case PAGE1G_SIZE:
+            page=pages;
+            for(i=0;i<count;i++){
+                unsigned long PMLE_selector = (page->virt_addr & ADDR_PML4_MASK) >> 39;
+
+                unsigned long PDPT_phy_addr = *((unsigned long *)page_table + PMLE_selector) & ~0xfff;
+                unsigned long PDPTE_selector = (page->virt_addr & ADDR_PDPT_MASK) >> 30;
+                unsigned long * PDPTE = (unsigned long *)PhyToVirtAddr(PDPT_phy_addr+8*PDPTE_selector);
+
+                if(*PDPTE == 0UL){
+                    *PDPTE = page->phy_addr | attr;
+                }
+            }
+            break;
+        case PAGE2M_SIZE:
+            page=pages;
+            for(i=0;i<count;i++){
+                unsigned long PMLE_selector = (page->virt_addr & ADDR_PML4_MASK) >> 39;
+
+                unsigned long PDPT_phy_addr = *((unsigned long *)page_table + PMLE_selector) & ~0xfff;
+                unsigned long PDPTE_selector = (page->virt_addr & ADDR_PDPT_MASK) >> 30;
+                unsigned long * PDPTE = (unsigned long *)PhyToVirtAddr(PDPT_phy_addr+8*PDPTE_selector);
+
+                if(*PDPTE == 0UL){
+                    *PDPTE = (page_table_phy_addr + 0x1000 + 1000*PDPT_count + 0x1000*PDT_count) | attr;
+                    PDT_count++;
+                }
+
+                unsigned long PDT_phy_addr = page_table_phy_addr + 0x1000 + 1000*PDPT_count + 0x1000*PDT_count;
+                unsigned long PDE_selector = (page->virt_addr & ADDR_PDT_MASK) >> 21;
+                unsigned long *PDE = (unsigned long *)PhyToVirtAddr(PDT_phy_addr + 8*PDE_selector);
+
+                if(*PDE == 0UL)*PDE = page->phy_addr | attr;
+
+                page = pages->next;
+            }
+            break;
+        case PAGE4K_SIZE:
+            page=pages;
+            for(i=0;i<count;i++){
+                unsigned long PMLE_selector = (page->virt_addr & ADDR_PML4_MASK) >> 39;
+
+                unsigned long PDPT_phy_addr = *((unsigned long *)page_table + PMLE_selector) & ~0xfff;
+                unsigned long PDPTE_selector = (page->virt_addr & ADDR_PDPT_MASK) >> 30;
+                unsigned long * PDPTE = (unsigned long *)PhyToVirtAddr(PDPT_phy_addr+8*PDPTE_selector);
+
+                if(*PDPTE == 0UL){
+                    *PDPTE = (page_table_phy_addr + 0x1000 + 1000*PDPT_count + 0x1000*PDT_count) | attr;
+                    PDT_count++;
+                }
+
+                unsigned long PDT_phy_addr = page_table_phy_addr + 0x1000 + 1000*PDPT_count + 0x1000*PDT_count;
+                unsigned long PDE_selector = (page->virt_addr & ADDR_PDT_MASK) >> 21;
+                unsigned long *PDE = (unsigned long *)PhyToVirtAddr(PDT_phy_addr + 8*PDE_selector);
+
+                if(*PDE == 0UL){
+                    *PDE = (page_table_phy_addr + 0x1000 + 1000*PDPT_count + 0x1000*PDT_count + 0x1000*PT_count) | attr;
+                    PT_count++;
+                }
+
+                unsigned long PT_phy_addr = 0;
+                unsigned long PTE_selector = (page->virt_addr & ADDR_PT_MASK) >> 12;
+                unsigned long *PTE = (unsigned long *)PhyToVirtAddr(PT_phy_addr + 8*PTE_selector);
+
+                if(*PTE == 0UL)*PTE = page->phy_addr | attr;
+
+                page = pages->next;
+            }
+            break;
+    }
+    return page_table;
+}
+
+void swap_page(void * page_table,struct page * page_l,struct page * page_r){
+
+}
 
 struct page * alloc_pages(unsigned int cnt, unsigned long option, unsigned long flags){
     struct page * page = (struct page *)memory_management.end;
@@ -228,8 +349,16 @@ int init_memory_management_unit(){
 
     memory_management.cr3 = cr3;
     memory_management.kstart = (unsigned long)&_start;
-    memory_management.end = (unsigned long)&_end;
     memory_management.kend = (unsigned long)&_end;
+    memory_management.ktext = (unsigned long)&_text;
+    memory_management.ketext = (unsigned long)&_etext;
+    memory_management.kdata = (unsigned long)&_data;
+    memory_management.kedata = (unsigned long)&_edata;
+    memory_management.krodata = (unsigned long)&_rodata;
+    memory_management.kerodata = (unsigned long)&_erodata;
+    memory_management.kbss = (unsigned long)&_bss;
+    memory_management.kebss = (unsigned long)&_ebss;
+    memory_management.end = (unsigned long)&_end;
 
     info("kernel kstart:%#018x,kend:%#018x\n",memory_management.kstart,memory_management.kend);
 
@@ -250,6 +379,13 @@ int init_memory_management_unit(){
 
             zone->phy_addr = memory_management.memory_struct[i].offset;
             zone->length = memory_management.memory_struct[i].length;
+
+            /*
+             * do not use 0x000000~0x100000
+             * this space that is ram will be use for kernel stack space.
+             */
+            if(zone->phy_addr >= 0x100000)zone->flags = ZONE_ALLOW_USE;
+
             memory_management.end += sizeof(struct zone);
             zone->next = (struct zone *)memory_management.end;
 
@@ -280,7 +416,10 @@ int init_memory_management_unit(){
 
         zone = memory_management.zone;
         while(zone != NULL){
-            if(kpage->phy_addr < zone->phy_addr+zone->length && kpage->phy_addr >= zone->phy_addr)break;
+            if((zone->flags & ZONE_ALLOW_USE)
+                    && kpage->phy_addr < zone->phy_addr+zone->length
+                    && kpage->phy_addr >= zone->phy_addr)break;
+
             zone = zone->next;
         }
         kpage->zone = zone;
@@ -310,7 +449,10 @@ int init_memory_management_unit(){
 
         zone = memory_management.zone;
         while(zone != NULL){
-            if(krpage->phy_addr < zone->phy_addr+zone->length && krpage->phy_addr >= zone->phy_addr)break;
+            if((zone->flags & ZONE_ALLOW_USE)
+                    && krpage->phy_addr < zone->phy_addr+zone->length
+                    && krpage->phy_addr >= zone->phy_addr)break;
+
             zone = zone->next;
         }
         krpage->zone = zone;
@@ -327,9 +469,29 @@ int init_memory_management_unit(){
     memory_management.end += kernel_revd_page_cnt * sizeof(struct page);
     memory_management.used_phy += kernel_revd_page_cnt * DEFAULT_PAGE_SIZE;
 
+    /*
+     * re initialize kernel page table
+     * set different attribute for different page by kernel segment
+     */
+#ifndef BOCHS
+    unsigned long * PDPTE_addr = (unsigned long *)((cr3 & ~0xfffUL) + 0x1000UL);
+    unsigned long * PDE_addr = (unsigned long *)((cr3 & ~0xfffUL) + 0x2000UL);
+    unsigned long phy_addr = 0x0000000000000000UL;
+    for(i=0;i<512;i++){
+        *PDE_addr = phy_addr | 0x83;
+        phy_addr += 0x200000UL;
+        PDE_addr++;
+    }
+    PDPTE_addr++;
+    for(i=0;i<511;i++){
+        *PDPTE_addr = phy_addr | 0x83;
+        phy_addr += 0x40000000UL;
+        PDPTE_addr++;
+    }
+    flush_page_table();
+#endif
 
     init_slab();
 
     info("init memory management unit\n");
 }
-

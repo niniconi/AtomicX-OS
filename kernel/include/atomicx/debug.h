@@ -58,9 +58,10 @@ __asm__(
         __zone = memory_management.zone; \
         int index = 0; \
         while(__zone != NULL){ \
-            debug("(%#06x)zone_addr--->%#018x,phy_addr--->%#018x,length--->%#018x,used--->%#018x\n", \
+            debug("(%#06x)zone_addr--->%#018x,flags->%#018x,phy_addr--->%#018x,length--->%#018x,used--->%#018x\n", \
                     index, \
                     __zone, \
+                    __zone->flags, \
                     __zone->phy_addr, \
                     __zone->length, \
                     __zone->used); \

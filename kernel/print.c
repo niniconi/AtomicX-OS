@@ -1,9 +1,10 @@
-#include "font.h"
-#include "print.h"
-#include "lib.h"
-#include "memory.h"
+#include <atomicx/print.h>
+#include <atomicx/memory.h>
+#include <lib.h>
 
 #include <stdarg.h>
+
+#include "font.h"
 
 struct position pos;
 
@@ -141,13 +142,17 @@ REPEAT:
                 break;
             case 'i':
             case 'd':
-                number(&buf, (unsigned long)va_arg(ap, int), flags | NUM_SIGN, 10,data_width,data_precision);
+                int dnum = va_arg(ap, int);
+                if(!(flags & NUM_SIGN) && dnum < 0)flags |= NUM_SIGN;
+                number(&buf, (unsigned long)dnum, flags, 10,data_width,data_precision);
                 break;
             case 'l':
                 format++;
                 switch (*format) {
                     case 'd':
-                        number(&buf, (unsigned long)va_arg(ap, long), flags | NUM_SIGN, 10, data_width,data_precision);
+                        long ldnum = va_arg(ap, long);
+                        if(!(flags & NUM_SIGN) && ldnum < 0)flags |= NUM_SIGN;
+                        number(&buf, (unsigned long)ldnum, flags, 10, data_width,data_precision);
                         break;
                 }
                 break;
@@ -294,6 +299,9 @@ void init_ppos(){
     pos.height=*(unsigned short *)(vbe_mode_info_block_ptr + 20);
     pos.charxs=8;
     pos.charys=16;
-    pos.vromaddr=(int *)((unsigned long)*(unsigned int *)(vbe_mode_info_block_ptr+40) + 0xffff800040000000);
-    /* pos.vromaddr=(int *)0xffff800002200000; */
+#ifdef BOCHS
+    pos.vromaddr=(int *)0xffff800002200000;
+#else
+    pos.vromaddr=(int *)PhyToVirtAddr(*(unsigned int *)(vbe_mode_info_block_ptr+40));
+#endif
 }

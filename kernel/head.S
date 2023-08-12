@@ -151,7 +151,6 @@ __PML4T:
 .org 0x2000
 __PDPT:
     .quad 0x00103003
-    .quad 0x00000083//1GB PAGE
     .quad 0x40000083//1GB PAGE
     .quad 0x80000083//1GB PAGE
     .quad 0xc0000083//1GB PAGE
@@ -161,7 +160,7 @@ __PDPT:
     .quad 0x1c0000083//1GB PAGE
     .quad 0x200000083//1GB PAGE
     .quad 0x2e0000083//1GB PAGE
-    .fill 512-11,8,0
+    .fill 512-10,8,0
 .org 0x3000
 __PDT:
     // the default page size
