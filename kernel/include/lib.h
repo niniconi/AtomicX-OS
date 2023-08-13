@@ -139,6 +139,15 @@ struct list{
     struct list * next;
 };
 
+struct node{
+    struct node * parent;
+
+    unsigned long data;
+
+    struct node * left;
+    struct node * right;
+};
+
 #define def_forbid_intr_function(function) \
     __asm__(#function": \n\t" \
             "cli \n\t" \

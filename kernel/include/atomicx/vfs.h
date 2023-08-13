@@ -1,6 +1,6 @@
 #ifndef __VFS_H
 #define __VFS_H
-#include <lib/bool.h>
+#include <lib.h>
 
 #define VFS_FD_DIRECTORY 0x01L
 #define VFS_FD_EXEC 0x02L
@@ -32,9 +32,9 @@ struct super_block{
 };
 
 struct file_options{
-    unsigned long (*open)(struct super_block s_block);
-    unsigned long (*read)(struct super_block s_block);
-    unsigned long (*write)(struct super_block s_block);
+    unsigned long (*open)();
+    unsigned long (*read)();
+    unsigned long (*write)();
 };
 
 struct dentry_options{
@@ -65,6 +65,8 @@ struct file{
     struct dentry * dentry;
     struct file_options * f_ops;
 
+    const char * name;
+
     unsigned long flags;
     unsigned long size;
     unsigned long create_time;
@@ -85,13 +87,22 @@ struct dentry{
     struct list * chaild_dentry;
 };
 
-struct file_descriptor_pool{
+struct fd{
+    int fd;
+    struct file * file;
 
+    unsigned int flags;
+};
+
+struct file_descriptor_pool{
+    struct node * fds;//binary tree
+    unsigned int fd_count;
 };
 
 
 struct vfs{
     struct disk_partition * parts;
+    struct super_block * su_block;
     struct dentry * root;
 
     struct file_descriptor_pool * fd_pool;
@@ -111,6 +122,12 @@ enum open_ops{
     O_NOFOLLOW = 0x400,
     O_NONBLOCK = 0x800,
     O_TRUNC = 0x1000,
+};
+
+enum default_fd{
+    stdin = 0,
+    stdout = 1,
+    stderr = 2,
 };
 
 int init_vfs();
