@@ -49,6 +49,18 @@
  */
 #define KERNEL_REVD_PAGE_CNT 20
 
+/*
+ * segment selector
+ */
+#define KERNEL64_CS 0x08
+#define KERNEL64_DS 0x10
+#define USER64_CS 0x18
+#define USER64_DS 0x20
+#define KERNEL32_CS 0x28
+#define KERNEL32_DS 0x30
+#define USER32_CS 0x38
+#define USER32_DS 0x40
+
 int init_memory_management_unit();
 struct page * alloc_pages(unsigned int cnt, unsigned long option, unsigned long flags);
 int free_pages(int cnt, struct page * dpage);

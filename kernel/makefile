@@ -5,7 +5,7 @@ FILESYSTEM:=fs/fat32.o
 INCLUDE:=./include
 BIN:=kernel.bin
 DIR:=../master
-OBJ:=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o disk.o memory.o slab.o APIC.o 8259a.o date.o vfs.o
+OBJ:=head.o entry.o kernel.o print.o interrupt.o trap.o keyboard.o disk.o memory.o slab.o APIC.o 8259a.o date.o vfs.o task.o
 # PIC:=-DAPIC
 PIC:=
 
@@ -44,6 +44,8 @@ date.o:date.c clean
 	gcc $(FLAGS) $(MACRO) -I $(INCLUDE) -c date.c -o date.o
 vfs.o:vfs.c clean
 	gcc $(FLAGS) $(MACRO) -I $(INCLUDE) -c vfs.c -o vfs.o
+task.o:task.c clean
+	gcc $(FLAGS) $(MACRO) -I $(INCLUDE) -c task.c -o task.o
 filesystem:
 	$(MAKE) -C fs
 
